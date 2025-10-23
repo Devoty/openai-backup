@@ -1,0 +1,24 @@
+package main
+
+const (
+	defaultBaseURL      = "https://chatgpt.com/backend-api"
+	defaultUserAgent    = "openai-backup/0.1 (+https://github.com/)"
+	defaultOutputFile   = "chatgpt_export.md"
+	tokenEnvVar         = "CHATGPT_BEARER_TOKEN"
+	deviceIDEnvVar      = "CHATGPT_DEVICE_ID"
+	userAgentEnvVar     = "CHATGPT_USER_AGENT"
+	acceptLangEnvVar    = "CHATGPT_ACCEPT_LANGUAGE"
+	refererEnvVar       = "CHATGPT_REFERER"
+	cookieEnvVar        = "CHATGPT_COOKIE"
+	originEnvVar        = "CHATGPT_ORIGIN"
+	oaiLanguageEnvVar   = "CHATGPT_OAI_LANGUAGE"
+	secChUAEnvVar       = "CHATGPT_SEC_CH_UA"
+	secChUAMobileEnv    = "CHATGPT_SEC_CH_UA_MOBILE"
+	secChUAPlatformEnv  = "CHATGPT_SEC_CH_UA_PLATFORM"
+	secFetchDestEnv     = "CHATGPT_SEC_FETCH_DEST"
+	secFetchModeEnv     = "CHATGPT_SEC_FETCH_MODE"
+	secFetchSiteEnv     = "CHATGPT_SEC_FETCH_SITE"
+	accountIDEnvVar     = "CHATGPT_ACCOUNT_ID"
+	clientVersionEnvVar = "CHATGPT_CLIENT_VERSION"
+	priorityEnvVar      = "CHATGPT_PRIORITY"
+)
