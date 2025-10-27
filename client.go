@@ -1,8 +1,10 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -17,7 +19,7 @@ func fetchAllConversations(ctx context.Context, client *http.Client, cfg *cliCon
 
 	for {
 		logInfo("请求对话列表 offset=%d limit=%d", offset, cfg.PageSize)
-		page, err := fetchConversationPage(ctx, client, cfg, token, offset)
+		page, err := fetchConversationPage(ctx, client, cfg, token, offset, cfg.PageSize)
 		if err != nil {
 			return nil, err
 		}
@@ -47,7 +49,7 @@ func fetchAllConversations(ctx context.Context, client *http.Client, cfg *cliCon
 	return result, nil
 }
 
-func fetchConversationPage(ctx context.Context, client *http.Client, cfg *cliConfig, token string, offset int) (*conversationListResponse, error) {
+func fetchConversationPage(ctx context.Context, client *http.Client, cfg *cliConfig, token string, offset, limit int) (*conversationListResponse, error) {
 	// 构造列表接口请求。
 	endpoint, err := url.Parse(cfg.BaseURL + "/conversations")
 	if err != nil {
@@ -56,7 +58,7 @@ func fetchConversationPage(ctx context.Context, client *http.Client, cfg *cliCon
 
 	query := endpoint.Query()
 	query.Set("offset", fmt.Sprintf("%d", offset))
-	query.Set("limit", fmt.Sprintf("%d", cfg.PageSize))
+	query.Set("limit", fmt.Sprintf("%d", limit))
 	query.Set("order", cfg.Order)
 	if cfg.IncludeArchived {
 		query.Set("is_archived", "true")
@@ -170,4 +172,39 @@ func applyCommonHeaders(req *http.Request, cfg *cliConfig, token string) {
 	if cfg.Priority != "" {
 		req.Header.Set("priority", cfg.Priority)
 	}
+}
+
+func deleteConversation(ctx context.Context, client *http.Client, cfg *cliConfig, token, conversationID string) error {
+	if strings.TrimSpace(conversationID) == "" {
+		return errors.New("缺少对话 ID")
+	}
+
+	endpoint := fmt.Sprintf("%s/conversation/%s", strings.TrimSuffix(cfg.BaseURL, "/"), url.PathEscape(conversationID))
+	payload := map[string]any{
+		"is_visible": false,
+	}
+	data, err := json.Marshal(payload)
+	if err != nil {
+		return fmt.Errorf("构造删除请求失败: %w", err)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPatch, endpoint, bytes.NewReader(data))
+	if err != nil {
+		return err
+	}
+	applyCommonHeaders(req, cfg, token)
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 1024))
+		return fmt.Errorf("删除对话失败: %s - %s", resp.Status, strings.TrimSpace(string(body)))
+	}
+
+	return nil
 }
