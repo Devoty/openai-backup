@@ -28,7 +28,7 @@ func main() {
 	}
 	defer logCloser.Close()
 
-	logInfo("启动导出流程, 输出时区=%s, 目标文件=%s", cfg.OutputTimezone, cfg.OutputPath)
+	logInfo("启动导出流程, 输出时区=%s, AnytypeSpace=%s, TypeKey=%s", cfg.OutputTimezone, cfg.AnytypeSpaceID, cfg.AnytypeTypeKey)
 
 	client := &http.Client{
 		Timeout: 60 * time.Second,
@@ -62,13 +62,18 @@ func main() {
 		exitWithError(errors.New("没有可导出的对话内容"))
 	}
 
-	markdown := renderMarkdown(exports, cfg.OutputTimezone)
-	if err := os.WriteFile(cfg.OutputPath, []byte(markdown), 0o600); err != nil {
-		exitWithError(fmt.Errorf("写入Markdown文件失败: %w", err))
+	anyClient, err := newAnytypeClient(cfg, client)
+	if err != nil {
+		exitWithError(err)
 	}
 
-	fmt.Printf("已导出 %d 个对话到 %s\n", len(exports), cfg.OutputPath)
-	logInfo("导出完成, 对话数=%d, Markdown=%s", len(exports), cfg.OutputPath)
+	created, err := syncConversationsToAnytype(ctx, anyClient, exports, cfg.OutputTimezone)
+	if err != nil {
+		exitWithError(err)
+	}
+
+	fmt.Printf("已导出 %d 个对话到 Anytype 空间 %s\n", created, cfg.AnytypeSpaceID)
+	logInfo("导出完成, 对话数=%d, AnytypeSpace=%s", created, cfg.AnytypeSpaceID)
 }
 
 type cliConfig struct {
@@ -98,19 +103,24 @@ type cliConfig struct {
 	OAIClientVersion string
 	Priority         string
 	LogPath          string
+	AnytypeBaseURL   string
+	AnytypeVersion   string
+	AnytypeSpaceID   string
+	AnytypeTypeKey   string
+	AnytypeToken     string
 }
 
 func parseFlags() *cliConfig {
 	cfg := &cliConfig{}
 	flag.StringVar(&cfg.Token, "token", "", "OpenAI Bearer Token (默认从环境变量 "+tokenEnvVar+" 读取)")
 	flag.StringVar(&cfg.BaseURL, "base-url", defaultBaseURL, "接口基础地址")
-	flag.StringVar(&cfg.OutputPath, "output", defaultOutputFile, "Markdown 输出文件路径")
+	flag.StringVar(&cfg.OutputPath, "output", defaultOutputFile, "已废弃: 保留兼容性, 将忽略该参数")
 	flag.StringVar(&cfg.Order, "order", "updated", "排序字段 (updated 或 created)")
 	flag.IntVar(&cfg.PageSize, "page-size", 20, "每次请求的对话数量")
 	flag.IntVar(&cfg.MaxConversations, "max", 0, "最多导出的对话数量 (0 表示全部)")
 	flag.IntVar(&cfg.InitialOffset, "offset", 0, "从指定 offset 开始读取")
 	flag.BoolVar(&cfg.IncludeArchived, "include-archived", false, "是否包含已归档对话")
-	flag.StringVar(&cfg.OutputTimezone, "timezone", "Local", "Markdown 中的时间时区 (Local 或 UTC)")
+	flag.StringVar(&cfg.OutputTimezone, "timezone", "Local", "输出内容中的时间时区 (Local 或 UTC)")
 	flag.StringVar(&cfg.DeviceID, "device-id", "", "oai-device-id 请求头 (默认从环境变量 "+deviceIDEnvVar+" 读取)")
 	flag.StringVar(&cfg.UserAgent, "user-agent", "", "自定义 User-Agent (默认从环境变量 "+userAgentEnvVar+" 读取, 再回退内置值)")
 	flag.StringVar(&cfg.AcceptLanguage, "accept-language", "", "Accept-Language 请求头 (默认从环境变量 "+acceptLangEnvVar+" 读取)")
@@ -128,6 +138,11 @@ func parseFlags() *cliConfig {
 	flag.StringVar(&cfg.OAIClientVersion, "oai-client-version", "", "oai-client-version 请求头 (默认从环境变量 "+clientVersionEnvVar+" 读取)")
 	flag.StringVar(&cfg.Priority, "priority", "", "priority 请求头 (默认从环境变量 "+priorityEnvVar+" 读取)")
 	flag.StringVar(&cfg.LogPath, "log-file", "chatgpt_export.log", "日志输出文件路径")
+	flag.StringVar(&cfg.AnytypeToken, "anytype-token", "", "Anytype API Key (默认从环境变量 "+anytypeTokenEnvVar+" 读取)")
+	flag.StringVar(&cfg.AnytypeBaseURL, "anytype-base-url", "", "Anytype API 基础地址 (默认 "+defaultAnytypeBaseURL+")")
+	flag.StringVar(&cfg.AnytypeVersion, "anytype-version", "", "Anytype API 版本 (默认 "+defaultAnytypeVersion+")")
+	flag.StringVar(&cfg.AnytypeSpaceID, "anytype-space-id", "", "Anytype 目标空间 ID (默认从环境变量 "+anytypeSpaceIDEnvVar+" 读取)")
+	flag.StringVar(&cfg.AnytypeTypeKey, "anytype-type-key", "", "Anytype 对象类型 key (默认 "+defaultAnytypeTypeKey+")")
 	flag.Parse()
 
 	if cfg.UserAgent == "" {
@@ -180,6 +195,32 @@ func parseFlags() *cliConfig {
 	}
 	if cfg.Priority == "" {
 		cfg.Priority = strings.TrimSpace(os.Getenv(priorityEnvVar))
+	}
+	if cfg.AnytypeToken == "" {
+		cfg.AnytypeToken = strings.TrimSpace(os.Getenv(anytypeTokenEnvVar))
+	}
+	if cfg.AnytypeBaseURL == "" {
+		cfg.AnytypeBaseURL = strings.TrimSpace(os.Getenv(anytypeBaseURLEnvVar))
+	}
+	if cfg.AnytypeBaseURL == "" {
+		cfg.AnytypeBaseURL = defaultAnytypeBaseURL
+	} else {
+		cfg.AnytypeBaseURL = strings.TrimSpace(cfg.AnytypeBaseURL)
+	}
+	if cfg.AnytypeVersion == "" {
+		cfg.AnytypeVersion = strings.TrimSpace(os.Getenv(anytypeVersionEnvVar))
+	}
+	if cfg.AnytypeVersion == "" {
+		cfg.AnytypeVersion = defaultAnytypeVersion
+	}
+	if cfg.AnytypeSpaceID == "" {
+		cfg.AnytypeSpaceID = strings.TrimSpace(os.Getenv(anytypeSpaceIDEnvVar))
+	}
+	if cfg.AnytypeTypeKey == "" {
+		cfg.AnytypeTypeKey = strings.TrimSpace(os.Getenv(anytypeTypeKeyEnvVar))
+	}
+	if cfg.AnytypeTypeKey == "" {
+		cfg.AnytypeTypeKey = defaultAnytypeTypeKey
 	}
 	return cfg
 }

@@ -52,37 +52,29 @@ func buildExportConversation(meta conversationMeta, detail *conversationDetail) 
 	return export
 }
 
-func renderMarkdown(conversations []exportConversation, timezone string) string {
-	// 拼装最终的 Markdown 文档。
+func renderConversationMarkdown(conv exportConversation, timezone string) string {
+	// 拼装单个对话的 Markdown 内容，便于写入 Anytype。
 	var b strings.Builder
-	b.WriteString("# ChatGPT 对话导出\n\n")
 
 	loc := resolveLocation(timezone)
-	now := time.Now().In(loc).Format("2006-01-02 15:04:05 MST")
-	b.WriteString(fmt.Sprintf("_生成时间: %s_\n\n", now))
+	title := conv.Title
+	if title == "" {
+		title = "(未命名对话)"
+	}
 
-	logInfo("渲染 Markdown, 对话总数=%d, 时区=%s", len(conversations), timezone)
+	b.WriteString(fmt.Sprintf("# %s\n\n", escapeMarkdownHeading(title)))
+	b.WriteString(fmt.Sprintf("- 对话ID: `%s`\n", conv.ID))
+	b.WriteString(fmt.Sprintf("- 创建时间: %s\n", formatTimestamp(conv.CreateTime, loc)))
+	b.WriteString(fmt.Sprintf("- 最近更新: %s\n\n", formatTimestamp(conv.UpdateTime, loc)))
 
-	for _, conv := range conversations {
-		title := conv.Title
-		if title == "" {
-			title = "(未命名对话)"
+	for idx, msg := range conv.Messages {
+		label := strings.ToUpper(msg.Role)
+		if label == "" {
+			label = "UNKNOWN"
 		}
-
-		b.WriteString(fmt.Sprintf("## %s\n\n", escapeMarkdownHeading(title)))
-		b.WriteString(fmt.Sprintf("- 对话ID: `%s`\n", conv.ID))
-		b.WriteString(fmt.Sprintf("- 创建时间: %s\n", formatTimestamp(conv.CreateTime, loc)))
-		b.WriteString(fmt.Sprintf("- 最近更新: %s\n\n", formatTimestamp(conv.UpdateTime, loc)))
-
-		for idx, msg := range conv.Messages {
-			label := strings.ToUpper(msg.Role)
-			if label == "" {
-				label = "UNKNOWN"
-			}
-			b.WriteString(fmt.Sprintf("#### %d. %s · %s\n\n", idx+1, label, formatTimestamp(msg.CreateTime, loc)))
-			b.WriteString(blockquote(msg.Role, msg.Text))
-			b.WriteString("\n")
-		}
+		b.WriteString(fmt.Sprintf("## %d. %s · %s\n\n", idx+1, label, formatTimestamp(msg.CreateTime, loc)))
+		b.WriteString(blockquote(msg.Role, msg.Text))
+		b.WriteString("\n")
 	}
 
 	return b.String()
