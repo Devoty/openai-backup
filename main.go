@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
 	"strings"
+	"syscall"
 	"time"
 )
 
@@ -28,12 +30,21 @@ func main() {
 	}
 	defer logCloser.Close()
 
-	logInfo("启动导出流程, 输出时区=%s, AnytypeSpace=%s, TypeKey=%s", cfg.OutputTimezone, cfg.AnytypeSpaceID, cfg.AnytypeTypeKey)
-
 	client := &http.Client{
 		Timeout: 60 * time.Second,
 	}
-	ctx := context.Background()
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer cancel()
+
+	if cfg.ServeMode {
+		logInfo("启动 Web 界面, 输出时区=%s, 监听地址=%s", cfg.OutputTimezone, cfg.ServeAddr)
+		if err := runWebServer(ctx, client, cfg, token); err != nil {
+			exitWithError(fmt.Errorf("启动 Web 界面失败: %w", err))
+		}
+		return
+	}
+
+	logInfo("启动导出流程, 输出时区=%s, AnytypeSpace=%s, TypeKey=%s", cfg.OutputTimezone, cfg.AnytypeSpaceID, cfg.AnytypeTypeKey)
 
 	conversations, err := fetchAllConversations(ctx, client, cfg, token)
 	if err != nil {
@@ -108,6 +119,8 @@ type cliConfig struct {
 	AnytypeSpaceID   string
 	AnytypeTypeKey   string
 	AnytypeToken     string
+	ServeMode        bool
+	ServeAddr        string
 }
 
 func parseFlags() *cliConfig {
@@ -143,6 +156,8 @@ func parseFlags() *cliConfig {
 	flag.StringVar(&cfg.AnytypeVersion, "anytype-version", "", "Anytype API 版本 (默认 "+defaultAnytypeVersion+")")
 	flag.StringVar(&cfg.AnytypeSpaceID, "anytype-space-id", "", "Anytype 目标空间 ID (默认从环境变量 "+anytypeSpaceIDEnvVar+" 读取)")
 	flag.StringVar(&cfg.AnytypeTypeKey, "anytype-type-key", "", "Anytype 对象类型 key (默认 "+defaultAnytypeTypeKey+")")
+	flag.BoolVar(&cfg.ServeMode, "serve", false, "启动 Web 界面以浏览和导入对话")
+	flag.StringVar(&cfg.ServeAddr, "listen", "127.0.0.1:8080", "Web 界面监听地址")
 	flag.Parse()
 
 	if cfg.UserAgent == "" {
