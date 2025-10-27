@@ -26,8 +26,8 @@ func buildExportConversation(meta conversationMeta, detail *conversationDetail) 
 		text := renderMessageContent(msg.Content)
 		role := chooseRole(msg)
 		normalized := normalizeContent(text)
-		if normalized == "" {
-			if strings.EqualFold(role, "system") {
+		if normalized == "" || strings.TrimSpace(normalized) == "\"\"" {
+			if strings.EqualFold(role, "system") || strings.EqualFold(role, "assistant") {
 				logInfo("过滤空SYSTEM消息 node=%s", node.ID)
 			}
 			continue
@@ -80,7 +80,7 @@ func renderMarkdown(conversations []exportConversation, timezone string) string 
 				label = "UNKNOWN"
 			}
 			b.WriteString(fmt.Sprintf("#### %d. %s · %s\n\n", idx+1, label, formatTimestamp(msg.CreateTime, loc)))
-			b.WriteString(blockquote(msg.Text))
+			b.WriteString(blockquote(msg.Role, msg.Text))
 			b.WriteString("\n")
 		}
 	}
@@ -137,9 +137,17 @@ func chooseRole(msg *chatMessage) string {
 	return "unknown"
 }
 
-func blockquote(text string) string {
+func blockquote(role, text string) string {
+	isUser := strings.EqualFold(role, "user")
 	if text == "" {
-		return "> (空内容)\n"
+		if isUser {
+			return "> (空内容)\n"
+		}
+		return "(空内容)\n"
+	}
+
+	if !isUser {
+		return text + "\n"
 	}
 
 	lines := strings.Split(text, "\n")
