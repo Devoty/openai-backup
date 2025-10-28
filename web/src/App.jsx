@@ -61,18 +61,18 @@ function sanitizeOrder(value) {
 }
 
 function sanitizeParentType(value) {
-        const lower = typeof value === "string" ? value.trim().toLowerCase() : "";
-        if (lower === "page" || lower === "database") {
-                return lower;
-        }
-        return "";
+	const lower = typeof value === "string" ? value.trim().toLowerCase() : "";
+	if (lower === "page" || lower === "database") {
+		return lower;
+	}
+	return "";
 }
 
 function toNumber(value) {
-        if (typeof value === "number" && Number.isFinite(value)) {
-                return value;
-        }
-        if (typeof value === "string" && value.trim() !== "") {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+	if (typeof value === "string" && value.trim() !== "") {
                 const parsed = Number.parseInt(value.trim(), 10);
                 if (!Number.isNaN(parsed)) {
                         return parsed;
@@ -722,11 +722,11 @@ function App() {
                 setActiveTab("settings");
         }, [config]);
 
-        const handleConfigSubmit = useCallback(async (event) => {
-                event.preventDefault();
-                setConfigSaving(true);
-                try {
-                        const payload = prepareConfigPayload(configDraft);
+	const handleConfigSubmit = useCallback(async (event) => {
+		event.preventDefault();
+		setConfigSaving(true);
+		try {
+			const payload = prepareConfigPayload(configDraft);
                         const response = await fetch("/api/config", {
                                 method: "POST",
                                 headers: {
