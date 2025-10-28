@@ -155,6 +155,8 @@ function normalizeConfigResponse(data) {
 
 function createConfigDraft(config) {
         const source = config || initialConfig;
+        const maxValue = toNumber(source.max_conversations);
+        const offsetValue = toNumber(source.initial_offset);
         return {
                 listen: source.listen || "",
                 timezone: source.timezone || "",
@@ -162,8 +164,8 @@ function createConfigDraft(config) {
                 base_url: source.base_url || "",
                 order: sanitizeOrder(source.order),
                 page_size: String(clampPageSizeValue(source.page_size)),
-                max_conversations: String(Math.max(0, toNumber(source.max_conversations) ?? 0)),
-                initial_offset: String(Math.max(0, toNumber(source.initial_offset) ?? 0)),
+                max_conversations: String(Math.max(0, typeof maxValue === "number" ? maxValue : 0)),
+                initial_offset: String(Math.max(0, typeof offsetValue === "number" ? offsetValue : 0)),
                 include_archived: !!source.include_archived,
                 token: source.token || "",
                 device_id: source.device_id || "",
@@ -198,6 +200,8 @@ function createConfigDraft(config) {
 }
 
 function prepareConfigPayload(draft) {
+        const maxValue = toNumber(draft.max_conversations);
+        const offsetValue = toNumber(draft.initial_offset);
         return {
                 listen: (draft.listen || "").trim(),
                 timezone: (draft.timezone || "").trim(),
@@ -205,8 +209,8 @@ function prepareConfigPayload(draft) {
                 base_url: (draft.base_url || "").trim(),
                 order: sanitizeOrder(draft.order),
                 page_size: clampPageSizeValue(draft.page_size),
-                max_conversations: Math.max(0, toNumber(draft.max_conversations) ?? 0),
-                initial_offset: Math.max(0, toNumber(draft.initial_offset) ?? 0),
+                max_conversations: Math.max(0, typeof maxValue === "number" ? maxValue : 0),
+                initial_offset: Math.max(0, typeof offsetValue === "number" ? offsetValue : 0),
                 include_archived: !!draft.include_archived,
                 token: (draft.token || "").trim(),
                 device_id: (draft.device_id || "").trim(),
@@ -467,11 +471,11 @@ function ConfigField({ field, value, onChange }) {
                                 <label htmlFor={fieldId}>{label}</label>
                                 <select
                                         id={fieldId}
-                                        value={value ?? ""}
+                                        value={value == null ? "" : value}
                                         onChange={(event) => onChange(key, event.target.value)}
                                 >
                                         {options.map((option) => (
-                                                <option key={option.value ?? ""} value={option.value ?? ""}>
+                                                <option key={option.value == null ? "" : option.value} value={option.value == null ? "" : option.value}>
                                                         {option.label}
                                                 </option>
                                         ))}
@@ -488,7 +492,7 @@ function ConfigField({ field, value, onChange }) {
                                 <textarea
                                         id={fieldId}
                                         rows={rows || 3}
-                                        value={value ?? ""}
+                                        value={value == null ? "" : value}
                                         onChange={(event) => onChange(key, event.target.value)}
                                         placeholder={placeholder}
                                 />
@@ -503,7 +507,7 @@ function ConfigField({ field, value, onChange }) {
                         <input
                                 id={fieldId}
                                 type={type}
-                                value={value ?? ""}
+                                value={value == null ? "" : value}
                                 onChange={(event) => onChange(key, event.target.value)}
                                 placeholder={placeholder}
                                 min={min}

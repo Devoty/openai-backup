@@ -72,6 +72,26 @@ header .meta {
         align-items: center;
         flex-wrap: wrap;
 }
+.inline-select {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 500;
+}
+.inline-select select {
+        margin-left: 4px;
+        border-radius: 6px;
+        border: 1px solid #cbd5e1;
+        padding: 4px 8px;
+        font-size: 0.9rem;
+        color: #1f2937;
+        background: #ffffff;
+}
+.target-hint {
+        font-size: 0.85rem;
+        color: rgba(248, 250, 252, 0.9);
+        margin-left: auto;
+}
 #message {
 	margin-top: 12px;
 	padding: 10px 12px;
