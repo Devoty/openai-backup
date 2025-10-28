@@ -12,6 +12,7 @@ const (
 	defaultNotionDatabaseTitleProp = "Name"
 	defaultNotionPageTitleProp     = "title"
 	defaultExportTarget            = exportTargetAnytype
+	defaultConfigDBPath            = "config/app.db"
 	tokenEnvVar                    = "CHATGPT_BEARER_TOKEN"
 	deviceIDEnvVar                 = "CHATGPT_DEVICE_ID"
 	userAgentEnvVar                = "CHATGPT_USER_AGENT"
@@ -41,6 +42,7 @@ const (
 	notionTitlePropertyEnvVar      = "NOTION_TITLE_PROPERTY"
 	notionTokenEnvVar              = "NOTION_API_KEY"
 	exportTargetEnvVar             = "EXPORT_TARGET"
+	configSecretEnvVar             = "OPENAIBACKUP_CONFIG_SECRET"
 )
 
 const (

@@ -17,16 +17,11 @@ func main() {
 	// CLI 入口: 解析参数、初始化日志和 HTTP 客户端。
 	cfg := parseFlags()
 	target := strings.TrimSpace(cfg.ExportTarget)
-	if target == "" {
-		target = defaultExportTarget
-	}
+
 	target = strings.ToLower(target)
 	token := strings.TrimSpace(cfg.Token)
 	if token == "" {
 		token = strings.TrimSpace(os.Getenv(tokenEnvVar))
-	}
-	if token == "" {
-		exitWithError(errors.New("missing bearer token: provide --token or set " + tokenEnvVar))
 	}
 
 	logCloser, err := setupLogger(cfg.LogPath)
@@ -49,6 +44,13 @@ func main() {
 		return
 	}
 
+	if target == "" {
+		target = defaultExportTarget
+	}
+
+	if token == "" {
+		exitWithError(errors.New("missing bearer token: provide --token or set " + tokenEnvVar))
+	}
 	logInfo("启动导出流程, 输出时区=%s, 目标=%s", cfg.OutputTimezone, target)
 
 	conversations, err := fetchAllConversations(ctx, client, cfg, token)
@@ -152,6 +154,8 @@ type cliConfig struct {
 	NotionParentID      string
 	NotionTitleProperty string
 	ExportTarget        string
+	ConfigDBPath        string
+	ConfigSecret        string
 	ServeMode           bool
 	ServeAddr           string
 }
@@ -196,6 +200,8 @@ func parseFlags() *cliConfig {
 	flag.StringVar(&cfg.NotionParentType, "notion-parent-type", "", "Notion 父级类型 (page 或 database)")
 	flag.StringVar(&cfg.NotionParentID, "notion-parent-id", "", "Notion 父级页面/数据库 ID (默认从环境变量 "+notionParentIDEnvVar+" 读取)")
 	flag.StringVar(&cfg.NotionTitleProperty, "notion-title-property", "", "Notion 标题属性名称 (数据库默认 "+defaultNotionDatabaseTitleProp+")")
+	flag.StringVar(&cfg.ConfigDBPath, "config-db", defaultConfigDBPath, "配置持久化使用的 SQLite 文件路径")
+	flag.StringVar(&cfg.ConfigSecret, "config-secret", "", "配置加密密钥 (默认从环境变量 "+configSecretEnvVar+" 读取)")
 	flag.BoolVar(&cfg.ServeMode, "serve", false, "启动 Web 界面以浏览和导入对话")
 	flag.StringVar(&cfg.ServeAddr, "listen", "127.0.0.1:8080", "Web 界面监听地址")
 	flag.Parse()
@@ -312,6 +318,14 @@ func parseFlags() *cliConfig {
 	if cfg.NotionTitleProperty == "" {
 		cfg.NotionTitleProperty = strings.TrimSpace(os.Getenv(notionTitlePropertyEnvVar))
 	}
+	cfg.ConfigDBPath = strings.TrimSpace(cfg.ConfigDBPath)
+	if cfg.ConfigDBPath == "" {
+		cfg.ConfigDBPath = defaultConfigDBPath
+	}
+	if cfg.ConfigSecret == "" {
+		cfg.ConfigSecret = strings.TrimSpace(os.Getenv(configSecretEnvVar))
+	}
+	cfg.ConfigSecret = strings.TrimSpace(cfg.ConfigSecret)
 	return cfg
 }
 

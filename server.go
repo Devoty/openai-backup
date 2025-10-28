@@ -44,9 +44,12 @@ func cloneConversationPage(src *conversationListResponse) *conversationListRespo
 }
 
 type webServer struct {
-	cfg        *cliConfig
-	httpClient *http.Client
-	location   *time.Location
+	cfg            *cliConfig
+	httpClient     *http.Client
+	location       *time.Location
+	store          *configStore
+	hasPassword    bool
+	configUnlocked bool
 
 	configMu sync.RWMutex
 
@@ -145,6 +148,17 @@ type configUpdate struct {
 	NotionTitleProperty *string `json:"notion_title_property"`
 }
 
+type configStateResponse struct {
+	HasPassword bool `json:"has_password"`
+	Unlocked    bool `json:"unlocked"`
+}
+
+type passwordRequest struct {
+	Password    string `json:"password"`
+	OldPassword string `json:"old_password"`
+	NewPassword string `json:"new_password"`
+}
+
 //go:embed web/dist/*
 var webStatic embed.FS
 
@@ -159,15 +173,23 @@ func init() {
 }
 
 func runWebServer(ctx context.Context, httpClient *http.Client, cfg *cliConfig, token string) error {
-	app := newWebServer(httpClient, cfg, token)
+	app, err := newWebServer(httpClient, cfg, token)
+	if err != nil {
+		return err
+	}
+	defer func() {
+		if cerr := app.Close(); cerr != nil {
+			logInfo("关闭配置存储失败: %v", cerr)
+		}
+	}()
 	server := &http.Server{
-		Addr:    cfg.ServeAddr,
+		Addr:    app.cfg.ServeAddr,
 		Handler: app.routes(),
 	}
 
 	errCh := make(chan error, 1)
 	go func() {
-		logInfo("Web 界面已启动, 访问地址: http://%s", cfg.ServeAddr)
+		logInfo("Web 界面已启动, 访问地址: http://%s", app.cfg.ServeAddr)
 		if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			errCh <- err
 		}
@@ -186,9 +208,15 @@ func runWebServer(ctx context.Context, httpClient *http.Client, cfg *cliConfig, 
 	}
 }
 
-func newWebServer(httpClient *http.Client, cfg *cliConfig, token string) *webServer {
+func newWebServer(httpClient *http.Client, cfg *cliConfig, token string) (*webServer, error) {
 	cfgCopy := *cfg
 	cfgCopy.Token = strings.TrimSpace(token)
+	ctx := context.Background()
+
+	cfgCopy.Token = strings.TrimSpace(cfgCopy.Token)
+	if cfgCopy.Token == "" {
+		cfgCopy.Token = strings.TrimSpace(token)
+	}
 	cfgCopy.ExportTarget = normalizeExportTarget(cfgCopy.ExportTarget)
 	cfgCopy.Order = normalizeOrder(cfgCopy.Order)
 	cfgCopy.BaseURL = ensureBaseURL(cfgCopy.BaseURL)
@@ -197,14 +225,56 @@ func newWebServer(httpClient *http.Client, cfg *cliConfig, token string) *webSer
 	cfgCopy.InitialOffset = nonNegative(cfgCopy.InitialOffset)
 	cfgCopy.NotionParentType = sanitizeNotionParentType(cfgCopy.NotionParentType)
 	cfgCopy.OutputTimezone = strings.TrimSpace(cfgCopy.OutputTimezone)
-	loc := resolveLocation(cfgCopy.OutputTimezone)
-	return &webServer{
-		cfg:         &cfgCopy,
-		httpClient:  httpClient,
-		location:    loc,
-		pageCache:   make(map[convPageKey]conversationPageCacheEntry),
-		detailCache: make(map[string]detailCacheEntry),
+	if strings.TrimSpace(cfgCopy.UserAgent) == "" {
+		cfgCopy.UserAgent = defaultUserAgent
 	}
+	loc := resolveLocation(cfgCopy.OutputTimezone)
+
+	store, err := newConfigStore(cfgCopy.ConfigDBPath)
+	if err != nil {
+		return nil, err
+	}
+
+	app := &webServer{
+		cfg:            &cfgCopy,
+		httpClient:     httpClient,
+		location:       loc,
+		store:          store,
+		hasPassword:    store.HasPassword(),
+		configUnlocked: store.Unlocked(),
+		pageCache:      make(map[convPageKey]conversationPageCacheEntry),
+		detailCache:    make(map[string]detailCacheEntry),
+	}
+
+	if app.hasPassword {
+		if secret := strings.TrimSpace(cfg.ConfigSecret); secret != "" {
+			if err := store.Unlock(ctx, secret); err == nil {
+				app.configUnlocked = true
+			} else {
+				logInfo("自动解锁配置失败: %v", err)
+			}
+		}
+	} else if secret := strings.TrimSpace(cfg.ConfigSecret); secret != "" {
+		if err := store.SetPassword(ctx, secret); err != nil {
+			logInfo("初始化配置密码失败: %v", err)
+		} else {
+			app.hasPassword = true
+			app.configUnlocked = true
+			if err := store.SaveConfig(ctx, configToPayload(app.cfg)); err != nil {
+				logInfo("初始化配置持久化失败: %v", err)
+			}
+		}
+	}
+
+	if app.hasPassword && app.configUnlocked {
+		if payload, err := store.LoadConfig(ctx); err == nil {
+			applyConfigPayload(app.cfg, payload)
+		} else if !errors.Is(err, errConfigNotFound) {
+			return nil, fmt.Errorf("加载持久化配置失败: %w", err)
+		}
+	}
+
+	return app, nil
 }
 
 func (s *webServer) routes() http.Handler {
@@ -212,6 +282,9 @@ func (s *webServer) routes() http.Handler {
 	staticServer := http.FileServer(http.FS(distFS))
 	mux.Handle("/assets/", staticServer)
 	mux.Handle("/favicon.ico", staticServer)
+	mux.HandleFunc("/api/config/state", s.handleConfigState)
+	mux.HandleFunc("/api/config/unlock", s.handleConfigUnlock)
+	mux.HandleFunc("/api/config/password", s.handleConfigPassword)
 	mux.HandleFunc("/api/config", s.handleConfig)
 	mux.HandleFunc("/api/conversations", s.handleConversationList)
 	mux.HandleFunc("/api/conversations/delete", s.handleDelete)
@@ -221,12 +294,152 @@ func (s *webServer) routes() http.Handler {
 	return mux
 }
 
+func (s *webServer) handleConfigState(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	state := configStateResponse{
+		HasPassword: s.hasPassword,
+		Unlocked:    s.configUnlocked,
+	}
+	writeJSON(w, http.StatusOK, state)
+}
+
+func (s *webServer) handleConfigUnlock(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !s.hasPassword {
+		writeError(w, http.StatusBadRequest, "尚未设置配置密码")
+		return
+	}
+	defer r.Body.Close()
+	var req passwordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("解析请求失败: %v", err))
+		return
+	}
+	password := strings.TrimSpace(req.Password)
+	if password == "" {
+		writeError(w, http.StatusBadRequest, "请输入密码")
+		return
+	}
+	if err := s.store.Unlock(r.Context(), password); err != nil {
+		if errors.Is(err, errInvalidPassword) {
+			writeError(w, http.StatusUnauthorized, "密码错误")
+			return
+		}
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("解锁失败: %v", err))
+		return
+	}
+	s.configUnlocked = true
+	payload, err := s.store.LoadConfig(r.Context())
+	if err != nil {
+		if errors.Is(err, errConfigNotFound) {
+			writeJSON(w, http.StatusOK, configStateResponse{HasPassword: s.hasPassword, Unlocked: s.configUnlocked})
+			return
+		}
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("加载配置失败: %v", err))
+		return
+	}
+	s.configMu.Lock()
+	applyConfigPayload(s.cfg, payload)
+	s.location = resolveLocation(s.cfg.OutputTimezone)
+	s.configMu.Unlock()
+	writeJSON(w, http.StatusOK, payload)
+}
+
+func (s *webServer) handleConfigPassword(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	defer r.Body.Close()
+	var req passwordRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("解析请求失败: %v", err))
+		return
+	}
+	ctx := r.Context()
+	if !s.hasPassword {
+		password := strings.TrimSpace(req.Password)
+		if password == "" {
+			writeError(w, http.StatusBadRequest, "密码不能为空")
+			return
+		}
+		if err := s.store.SetPassword(ctx, password); err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		s.hasPassword = true
+		s.configUnlocked = true
+		s.persistConfig(s.cfg)
+		writeJSON(w, http.StatusOK, configStateResponse{HasPassword: true, Unlocked: true})
+		return
+	}
+
+	oldPassword := strings.TrimSpace(req.OldPassword)
+	newPassword := strings.TrimSpace(req.NewPassword)
+	if oldPassword == "" || newPassword == "" {
+		writeError(w, http.StatusBadRequest, "请提供旧密码和新密码")
+		return
+	}
+	if !s.configUnlocked {
+		if err := s.store.Unlock(ctx, oldPassword); err != nil {
+			if errors.Is(err, errInvalidPassword) {
+				writeError(w, http.StatusUnauthorized, "旧密码不正确")
+				return
+			}
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("解锁失败: %v", err))
+			return
+		}
+		s.configUnlocked = true
+	}
+
+	payload := configToPayload(s.cfg)
+	if err := s.store.UpdatePassword(ctx, newPassword); err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	if err := s.store.SaveConfig(ctx, payload); err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("更新配置失败: %v", err))
+		return
+	}
+	writeJSON(w, http.StatusOK, configStateResponse{HasPassword: true, Unlocked: true})
+}
+
+func (s *webServer) Close() error {
+	if s == nil {
+		return nil
+	}
+	if s.store != nil {
+		if err := s.store.Close(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (s *webServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
+		if s.hasPassword && !s.configUnlocked {
+			writeError(w, http.StatusForbidden, "配置已加密，请先输入密码")
+			return
+		}
 		payload := s.currentConfigPayload()
 		writeJSON(w, http.StatusOK, payload)
 	case http.MethodPost:
+		if !s.configUnlocked {
+			if s.hasPassword {
+				writeError(w, http.StatusForbidden, "配置已加密，请先解锁后再保存")
+			} else {
+				writeError(w, http.StatusForbidden, "请先设置配置密码，再保存修改")
+			}
+			return
+		}
 		defer r.Body.Close()
 		var input configUpdate
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -298,6 +511,56 @@ func configToPayload(cfg *cliConfig) configPayload {
 		payload.BaseURL = defaultBaseURL
 	}
 	return payload
+}
+
+func applyConfigPayload(cfg *cliConfig, payload configPayload) {
+	if cfg == nil {
+		return
+	}
+	if listen := strings.TrimSpace(payload.Listen); listen != "" {
+		cfg.ServeAddr = listen
+	}
+	if tz := strings.TrimSpace(payload.Timezone); tz != "" {
+		cfg.OutputTimezone = tz
+	}
+	cfg.ExportTarget = normalizeExportTarget(payload.Target)
+	cfg.BaseURL = strings.TrimSpace(payload.BaseURL)
+	cfg.Order = payload.Order
+	if payload.PageSize > 0 {
+		cfg.PageSize = payload.PageSize
+	}
+	cfg.MaxConversations = payload.MaxConversations
+	cfg.InitialOffset = payload.InitialOffset
+	cfg.IncludeArchived = payload.IncludeArchived
+	cfg.Token = strings.TrimSpace(payload.Token)
+	cfg.DeviceID = strings.TrimSpace(payload.DeviceID)
+	cfg.UserAgent = strings.TrimSpace(payload.UserAgent)
+	cfg.AcceptLanguage = strings.TrimSpace(payload.AcceptLanguage)
+	cfg.Referer = strings.TrimSpace(payload.Referer)
+	cfg.Cookie = strings.TrimSpace(payload.Cookie)
+	cfg.Origin = strings.TrimSpace(payload.Origin)
+	cfg.OaiLanguage = strings.TrimSpace(payload.OaiLanguage)
+	cfg.SecChUA = strings.TrimSpace(payload.SecChUA)
+	cfg.SecChUAMobile = strings.TrimSpace(payload.SecChUAMobile)
+	cfg.SecChUAPlatform = strings.TrimSpace(payload.SecChUAPlatform)
+	cfg.SecFetchDest = strings.TrimSpace(payload.SecFetchDest)
+	cfg.SecFetchMode = strings.TrimSpace(payload.SecFetchMode)
+	cfg.SecFetchSite = strings.TrimSpace(payload.SecFetchSite)
+	cfg.ChatGPTAccountID = strings.TrimSpace(payload.ChatGPTAccountID)
+	cfg.OAIClientVersion = strings.TrimSpace(payload.OAIClientVersion)
+	cfg.Priority = strings.TrimSpace(payload.Priority)
+	cfg.LogPath = strings.TrimSpace(payload.LogPath)
+	cfg.AnytypeBaseURL = strings.TrimSpace(payload.AnytypeBaseURL)
+	cfg.AnytypeVersion = strings.TrimSpace(payload.AnytypeVersion)
+	cfg.AnytypeSpaceID = strings.TrimSpace(payload.AnytypeSpaceID)
+	cfg.AnytypeTypeKey = strings.TrimSpace(payload.AnytypeTypeKey)
+	cfg.AnytypeToken = strings.TrimSpace(payload.AnytypeToken)
+	cfg.NotionBaseURL = strings.TrimSpace(payload.NotionBaseURL)
+	cfg.NotionVersion = strings.TrimSpace(payload.NotionVersion)
+	cfg.NotionToken = strings.TrimSpace(payload.NotionToken)
+	cfg.NotionParentType = sanitizeNotionParentType(payload.NotionParentType)
+	cfg.NotionParentID = strings.TrimSpace(payload.NotionParentID)
+	cfg.NotionTitleProperty = strings.TrimSpace(payload.NotionTitleProperty)
 }
 
 func (s *webServer) updateConfig(input configUpdate) (configPayload, error) {
@@ -420,14 +683,31 @@ func (s *webServer) updateConfig(input configUpdate) (configPayload, error) {
 	}
 
 	s.location = resolveLocation(cfg.OutputTimezone)
+	cfgCopy := *cfg
 	payload := configToPayload(cfg)
 	s.configMu.Unlock()
 
 	s.invalidateConversationCache()
 	s.clearDetailCache()
 	s.resetExportClients()
+	s.persistConfig(&cfgCopy)
 
 	return payload, nil
+}
+
+func (s *webServer) persistConfig(cfg *cliConfig) {
+	if s == nil || s.store == nil || cfg == nil {
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	if err := s.store.SaveConfig(ctx, configToPayload(cfg)); err != nil {
+		if errors.Is(err, errStoreLocked) || errors.Is(err, errPasswordNotSet) {
+			logInfo("配置未持久化: %v", err)
+		} else {
+			logInfo("配置持久化失败: %v", err)
+		}
+	}
 }
 
 func normalizeExportTarget(value string) string {

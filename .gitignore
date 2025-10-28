@@ -5,3 +5,6 @@
 /chatgpt.md
 /openai.http
 /web/dist/
+/scripts/chatgpt_export.log
+/scripts/config/
+/bin/openai-backup

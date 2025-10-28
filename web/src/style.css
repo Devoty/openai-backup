@@ -393,3 +393,90 @@ th.col-action, td.col-action {
 	color: #64748b;
 	margin-top: 40px;
 }
+
+.unlock-banner {
+	display: flex;
+	gap: 8px;
+	margin: 12px 0;
+}
+
+.unlock-banner input {
+	flex: 1;
+	padding: 8px 10px;
+	border: 1px solid #cbd5f5;
+	border-radius: 6px;
+}
+
+.unlock-banner button {
+	padding: 8px 16px;
+	background: #2563eb;
+	color: #ffffff;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.unlock-banner button:disabled {
+	background: #94a3b8;
+	cursor: not-allowed;
+}
+
+.direct-test {
+	margin-top: 16px;
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.direct-test button {
+	align-self: flex-start;
+	padding: 8px 16px;
+	border: 1px solid #2563eb;
+	background: transparent;
+	color: #2563eb;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.direct-test button:disabled {
+	border-color: #94a3b8;
+	color: #94a3b8;
+	cursor: not-allowed;
+}
+
+.password-section {
+	margin-top: 28px;
+}
+
+.password-section h2 {
+	font-size: 18px;
+	margin-bottom: 10px;
+}
+
+.password-form {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+	align-items: center;
+}
+
+.password-form input {
+	flex: 1 1 220px;
+	padding: 8px 10px;
+	border: 1px solid #cbd5f5;
+	border-radius: 6px;
+}
+
+.password-form button {
+	padding: 8px 16px;
+	background: #2563eb;
+	color: #ffffff;
+	border: none;
+	border-radius: 6px;
+	cursor: pointer;
+}
+
+.password-form button:disabled {
+	background: #94a3b8;
+	cursor: not-allowed;
+}
