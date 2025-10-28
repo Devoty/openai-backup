@@ -421,27 +421,47 @@ th.col-action, td.col-action {
 	cursor: not-allowed;
 }
 
-.direct-test {
-	margin-top: 16px;
-	display: flex;
-	flex-direction: column;
-	gap: 6px;
+.settings-tabs {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 16px;
 }
-
-.direct-test button {
-	align-self: flex-start;
-	padding: 8px 16px;
-	border: 1px solid #2563eb;
-	background: transparent;
-	color: #2563eb;
-	border-radius: 6px;
-	cursor: pointer;
+.settings-tabs .tab-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
 }
-
-.direct-test button:disabled {
-	border-color: #94a3b8;
-	color: #94a3b8;
-	cursor: not-allowed;
+.settings-tabs .tab-list button {
+        background: transparent;
+        color: #1f2937;
+        border: 1px solid #cbd5e1;
+        padding: 6px 14px;
+        font-size: 0.9rem;
+        box-shadow: none;
+}
+.settings-tabs .tab-list button.active {
+        background: #2563eb;
+        color: #ffffff;
+        border-color: #2563eb;
+        box-shadow: 0 6px 18px rgba(37, 99, 235, 0.25);
+}
+.settings-tabs .tab-list button.active:hover:not([disabled]) {
+        background: #2563eb;
+        color: #ffffff;
+}
+.settings-tabs .tab-list button:hover:not([disabled]) {
+        background: rgba(37, 99, 235, 0.08);
+}
+.settings-tabs .tab-actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-left: auto;
+}
+.settings-tabs .tab-actions button {
+        min-width: 124px;
 }
 
 .password-section {

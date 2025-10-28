@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"embed"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -285,6 +286,8 @@ func (s *webServer) routes() http.Handler {
 	mux.HandleFunc("/api/config/state", s.handleConfigState)
 	mux.HandleFunc("/api/config/unlock", s.handleConfigUnlock)
 	mux.HandleFunc("/api/config/password", s.handleConfigPassword)
+	mux.HandleFunc("/api/config/export", s.handleConfigExport)
+	mux.HandleFunc("/api/config/import", s.handleConfigImport)
 	mux.HandleFunc("/api/config", s.handleConfig)
 	mux.HandleFunc("/api/conversations", s.handleConversationList)
 	mux.HandleFunc("/api/conversations/delete", s.handleDelete)
@@ -455,6 +458,58 @@ func (s *webServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 	}
+}
+
+func (s *webServer) handleConfigExport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !s.configUnlocked {
+		if s.hasPassword {
+			writeError(w, http.StatusForbidden, "配置已加密，请先解锁后再导出")
+		} else {
+			writeError(w, http.StatusForbidden, "请先设置配置密码，再导出配置")
+		}
+		return
+	}
+	filename := fmt.Sprintf("openai-backup-config-%s.json", time.Now().Format("20060102-150405"))
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	payload, err := s.prepareConfigExport()
+	if err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("导出配置失败: %v", err))
+		return
+	}
+	writeJSON(w, http.StatusOK, payload)
+}
+
+func (s *webServer) handleConfigImport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	if !s.configUnlocked {
+		if s.hasPassword {
+			writeError(w, http.StatusForbidden, "配置已加密，请先解锁后再导入")
+		} else {
+			writeError(w, http.StatusForbidden, "请先设置配置密码，再导入配置")
+		}
+		return
+	}
+	defer r.Body.Close()
+	var payload configPayload
+	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("解析配置失败: %v", err))
+		return
+	}
+	decoded, err := s.decodeImportPayload(payload)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	normalized := normalizeConfigImportPayload(decoded)
+	response := s.replaceConfig(normalized)
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (s *webServer) currentConfigPayload() configPayload {
@@ -695,6 +750,22 @@ func (s *webServer) updateConfig(input configUpdate) (configPayload, error) {
 	return payload, nil
 }
 
+func (s *webServer) replaceConfig(payload configPayload) configPayload {
+	s.configMu.Lock()
+	applyConfigPayload(s.cfg, payload)
+	s.location = resolveLocation(s.cfg.OutputTimezone)
+	cfgCopy := *s.cfg
+	result := configToPayload(s.cfg)
+	s.configMu.Unlock()
+
+	s.invalidateConversationCache()
+	s.clearDetailCache()
+	s.resetExportClients()
+	s.persistConfig(&cfgCopy)
+
+	return result
+}
+
 func (s *webServer) persistConfig(cfg *cliConfig) {
 	if s == nil || s.store == nil || cfg == nil {
 		return
@@ -728,12 +799,125 @@ func normalizeOrder(value string) string {
 	}
 }
 
+func normalizeConfigImportPayload(payload configPayload) configPayload {
+	payload.Listen = strings.TrimSpace(payload.Listen)
+	payload.Timezone = strings.TrimSpace(payload.Timezone)
+	payload.Target = normalizeExportTarget(payload.Target)
+	payload.BaseURL = ensureBaseURL(payload.BaseURL)
+	payload.Order = normalizeOrder(payload.Order)
+	payload.PageSize = clampPageSize(payload.PageSize)
+	payload.MaxConversations = nonNegative(payload.MaxConversations)
+	payload.InitialOffset = nonNegative(payload.InitialOffset)
+	payload.Token = strings.TrimSpace(payload.Token)
+	payload.DeviceID = strings.TrimSpace(payload.DeviceID)
+	payload.UserAgent = strings.TrimSpace(payload.UserAgent)
+	payload.AcceptLanguage = strings.TrimSpace(payload.AcceptLanguage)
+	payload.Referer = strings.TrimSpace(payload.Referer)
+	payload.Cookie = strings.TrimSpace(payload.Cookie)
+	payload.Origin = strings.TrimSpace(payload.Origin)
+	payload.OaiLanguage = strings.TrimSpace(payload.OaiLanguage)
+	payload.SecChUA = strings.TrimSpace(payload.SecChUA)
+	payload.SecChUAMobile = strings.TrimSpace(payload.SecChUAMobile)
+	payload.SecChUAPlatform = strings.TrimSpace(payload.SecChUAPlatform)
+	payload.SecFetchDest = strings.TrimSpace(payload.SecFetchDest)
+	payload.SecFetchMode = strings.TrimSpace(payload.SecFetchMode)
+	payload.SecFetchSite = strings.TrimSpace(payload.SecFetchSite)
+	payload.ChatGPTAccountID = strings.TrimSpace(payload.ChatGPTAccountID)
+	payload.OAIClientVersion = strings.TrimSpace(payload.OAIClientVersion)
+	payload.Priority = strings.TrimSpace(payload.Priority)
+	payload.LogPath = strings.TrimSpace(payload.LogPath)
+	payload.AnytypeBaseURL = strings.TrimSpace(payload.AnytypeBaseURL)
+	payload.AnytypeVersion = strings.TrimSpace(payload.AnytypeVersion)
+	payload.AnytypeSpaceID = strings.TrimSpace(payload.AnytypeSpaceID)
+	payload.AnytypeTypeKey = strings.TrimSpace(payload.AnytypeTypeKey)
+	payload.AnytypeToken = strings.TrimSpace(payload.AnytypeToken)
+	payload.NotionBaseURL = strings.TrimSpace(payload.NotionBaseURL)
+	payload.NotionVersion = strings.TrimSpace(payload.NotionVersion)
+	payload.NotionToken = strings.TrimSpace(payload.NotionToken)
+	payload.NotionParentType = sanitizeNotionParentType(payload.NotionParentType)
+	payload.NotionParentID = strings.TrimSpace(payload.NotionParentID)
+	payload.NotionTitleProperty = strings.TrimSpace(payload.NotionTitleProperty)
+	return payload
+}
+
 func ensureBaseURL(value string) string {
 	trimmed := strings.TrimSpace(value)
 	if trimmed == "" {
 		return defaultBaseURL
 	}
 	return trimmed
+}
+
+const encryptedValuePrefix = "enc:"
+
+func (s *webServer) prepareConfigExport() (configPayload, error) {
+	payload := s.currentConfigPayload()
+	if s.store == nil {
+		return payload, nil
+	}
+	var err error
+	if payload.Token, err = s.encryptConfigValue("token", payload.Token); err != nil {
+		return configPayload{}, err
+	}
+	if payload.Cookie, err = s.encryptConfigValue("cookie", payload.Cookie); err != nil {
+		return configPayload{}, err
+	}
+	if payload.AnytypeToken, err = s.encryptConfigValue("anytype_token", payload.AnytypeToken); err != nil {
+		return configPayload{}, err
+	}
+	if payload.NotionToken, err = s.encryptConfigValue("notion_token", payload.NotionToken); err != nil {
+		return configPayload{}, err
+	}
+	return payload, nil
+}
+
+func (s *webServer) decodeImportPayload(payload configPayload) (configPayload, error) {
+	var err error
+	if payload.Token, err = s.decryptConfigValue("token", payload.Token); err != nil {
+		return configPayload{}, err
+	}
+	if payload.Cookie, err = s.decryptConfigValue("cookie", payload.Cookie); err != nil {
+		return configPayload{}, err
+	}
+	if payload.AnytypeToken, err = s.decryptConfigValue("anytype_token", payload.AnytypeToken); err != nil {
+		return configPayload{}, err
+	}
+	if payload.NotionToken, err = s.decryptConfigValue("notion_token", payload.NotionToken); err != nil {
+		return configPayload{}, err
+	}
+	return payload, nil
+}
+
+func (s *webServer) encryptConfigValue(key, value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" || s.store == nil || s.store.key == nil || !isSensitiveConfigKey(key) {
+		return value, nil
+	}
+	encrypted, err := s.store.encrypt([]byte(value))
+	if err != nil {
+		return "", fmt.Errorf("加密配置项 %s 失败: %w", key, err)
+	}
+	return encryptedValuePrefix + base64.StdEncoding.EncodeToString(encrypted), nil
+}
+
+func (s *webServer) decryptConfigValue(key, value string) (string, error) {
+	value = strings.TrimSpace(value)
+	if value == "" || s.store == nil || s.store.key == nil || !isSensitiveConfigKey(key) {
+		return value, nil
+	}
+	if !strings.HasPrefix(value, encryptedValuePrefix) {
+		return value, nil
+	}
+	raw := strings.TrimPrefix(value, encryptedValuePrefix)
+	data, err := base64.StdEncoding.DecodeString(raw)
+	if err != nil {
+		return "", fmt.Errorf("解码配置项 %s 失败: %w", key, err)
+	}
+	plain, err := s.store.decrypt(data)
+	if err != nil {
+		return "", fmt.Errorf("解密配置项 %s 失败: %w", key, err)
+	}
+	return string(plain), nil
 }
 
 func clampPageSize(value int) int {

@@ -68,42 +68,6 @@ function sanitizeParentType(value) {
 	return "";
 }
 
-const defaultBaseURL = "https://chatgpt.com/backend-api";
-
-function resolveBaseURL(value) {
-	const trimmed = typeof value === "string" ? value.trim() : "";
-	if (!trimmed) {
-		return defaultBaseURL;
-	}
-	return trimmed.replace(/\/+$/, "");
-}
-
-function buildDirectFetchHeaders(draft) {
-	const token = typeof draft.token === "string" ? draft.token.trim() : "";
-	if (!token) {
-		throw new Error("请先填写 Bearer Token");
-	}
-	const headers = {
-		Authorization: "Bearer " + token,
-		Accept: "application/json"
-	};
-	const optional = [
-		["oai-device-id", draft.device_id],
-		["oai-language", draft.oai_language],
-		["Accept-Language", draft.accept_language],
-		["chatgpt-account-id", draft.chatgpt_account_id],
-		["oai-client-version", draft.oai_client_version],
-		["priority", draft.priority]
-	];
-	optional.forEach(([key, value]) => {
-		const trimmed = typeof value === "string" ? value.trim() : "";
-		if (trimmed) {
-			headers[key] = trimmed;
-		}
-	});
-	return headers;
-}
-
 function toNumber(value) {
 	if (typeof value === "number" && Number.isFinite(value)) {
 		return value;
@@ -574,12 +538,66 @@ function ConfigSection({ section, draft, onFieldChange }) {
         );
 }
 
-function ConfigForm({ draft, onFieldChange, onSubmit, onReset, saving, locked }) {
+function ConfigForm({
+        draft,
+        onFieldChange,
+        onSubmit,
+        onReset,
+        saving,
+        locked,
+        activeSection,
+        onSectionChange,
+        onImport,
+        onExport,
+        importing,
+        exporting
+}) {
+        const currentSection = useMemo(() => {
+                if (!configSections || configSections.length === 0) {
+                        return null;
+                }
+                return configSections.find((section) => section.key === activeSection) || configSections[0];
+        }, [activeSection]);
+
         return (
                 <form className="settings-form" onSubmit={onSubmit}>
-                        {configSections.map((section) => (
-                                <ConfigSection key={section.key} section={section} draft={draft} onFieldChange={onFieldChange} />
-                        ))}
+                        <div className="settings-tabs">
+                                <div className="tab-list">
+                                        {configSections.map((section) => {
+                                                const isActive = currentSection ? section.key === currentSection.key : false;
+                                                return (
+                                                        <button
+                                                                key={section.key}
+                                                                type="button"
+                                                                className={isActive ? "active" : ""}
+                                                                onClick={() => onSectionChange ? onSectionChange(section.key) : null}
+                                                        >
+                                                                {section.title}
+                                                        </button>
+                                                );
+                                        })}
+                                </div>
+                                <div className="tab-actions">
+                                        <button
+                                                type="button"
+                                                className="secondary"
+                                                onClick={() => onImport ? onImport() : null}
+                                                disabled={locked || importing || saving}
+                                        >
+                                                {importing ? "导入中…" : "导入基础数据"}
+                                        </button>
+                                        <button
+                                                type="button"
+                                                onClick={() => onExport ? onExport() : null}
+                                                disabled={locked || exporting}
+                                        >
+                                                {exporting ? "导出中…" : "导出基础数据"}
+                                        </button>
+                                </div>
+                        </div>
+                        {currentSection ? (
+                                <ConfigSection section={currentSection} draft={draft} onFieldChange={onFieldChange} />
+                        ) : null}
                         <div className="form-actions">
                                 <button type="button" className="secondary" onClick={onReset} disabled={saving}>
                                         重置修改
@@ -596,6 +614,7 @@ function App() {
         const [conversations, setConversations] = useState([]);
         const [config, setConfig] = useState(initialConfig);
         const [activeTab, setActiveTab] = useState("conversations");
+        const [configTab, setConfigTab] = useState("core");
         const [configDraft, setConfigDraft] = useState(() => createConfigDraft(initialConfig));
         const [configSaving, setConfigSaving] = useState(false);
         const [configState, setConfigState] = useState({ hasPassword: false, unlocked: true });
@@ -618,8 +637,10 @@ function App() {
 	const [unlockLoading, setUnlockLoading] = useState(false);
 	const [passwordSaving, setPasswordSaving] = useState(false);
 	const [passwordInputs, setPasswordInputs] = useState({ password: "", oldPassword: "", newPassword: "" });
-	const [directTestLoading, setDirectTestLoading] = useState(false);
+        const [configImporting, setConfigImporting] = useState(false);
+        const [configExporting, setConfigExporting] = useState(false);
         const messageTimerRef = useRef(null);
+        const configImportInputRef = useRef(null);
 
 	const selectedIds = useMemo(() => Array.from(selected), [selected]);
 	const selectedCount = selectedIds.length;
@@ -792,8 +813,159 @@ function App() {
 
         const handleOpenSettings = useCallback(() => {
                 setConfigDraft(createConfigDraft(config));
+                setConfigTab("core");
                 setActiveTab("settings");
         }, [config]);
+
+        const handleConfigSectionChange = useCallback((key) => {
+                if (typeof key !== "string" || key.trim() === "") {
+                        setConfigTab("core");
+                        return;
+                }
+                const exists = configSections.some((section) => section.key === key);
+                setConfigTab(exists ? key : "core");
+        }, [setConfigTab]);
+
+        const handleConfigExport = useCallback(async () => {
+                if (isConfigLocked) {
+                        showMessage("请先解锁配置后再导出", true);
+                        return;
+                }
+                setConfigExporting(true);
+                try {
+                        const response = await fetch("/api/config/export", {
+                                headers: { "Accept": "application/json" }
+                        });
+                        if (!response.ok) {
+                                let message = response.statusText || "导出配置失败";
+                                try {
+                                        const data = await response.json();
+                                        if (data && data.error) {
+                                                message = data.error;
+                                        }
+                                } catch {
+                                        try {
+                                                const text = await response.text();
+                                                if (text) {
+                                                        message = text;
+                                                }
+                                        } catch {
+                                                // ignore secondary failure
+                                        }
+                                }
+                                throw new Error(message);
+                        }
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        let filename = "openai-backup-config.json";
+                        const disposition = response.headers.get("Content-Disposition");
+                        if (disposition) {
+                                const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename=\"?([^\";]+)\"?/i);
+                                if (match) {
+                                        const rawName = match[1] || match[2];
+                                        if (rawName) {
+                                                try {
+                                                        filename = decodeURIComponent(rawName);
+                                                } catch {
+                                                        filename = rawName;
+                                                }
+                                        }
+                                }
+                        } else {
+                                const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "");
+                                filename = "openai-backup-config-" + stamp + ".json";
+                        }
+                        const link = document.createElement("a");
+                        link.href = url;
+                        link.download = filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                        URL.revokeObjectURL(url);
+                        showMessage("配置已导出", false);
+                } catch (error) {
+                        showMessage((error && error.message) || "导出配置失败", true);
+                } finally {
+                        setConfigExporting(false);
+                }
+        }, [isConfigLocked, showMessage]);
+
+        const handleConfigImportClick = useCallback(() => {
+                if (isConfigLocked) {
+                        showMessage("请先解锁配置后再导入", true);
+                        return;
+                }
+                if (configImportInputRef.current) {
+                        configImportInputRef.current.value = "";
+                        configImportInputRef.current.click();
+                }
+        }, [isConfigLocked, showMessage, configImportInputRef]);
+
+        const handleConfigImportFile = useCallback((event) => {
+                if (isConfigLocked) {
+                        showMessage("请先解锁配置后再导入", true);
+                        if (event && event.target) {
+                                event.target.value = "";
+                        }
+                        return;
+                }
+                const input = event && event.target;
+                const files = input && input.files;
+                if (!files || files.length === 0) {
+                        return;
+                }
+                const file = files[0];
+                if (!file) {
+                        return;
+                }
+                const reader = new FileReader();
+                reader.onload = async () => {
+                        try {
+                                const text = typeof reader.result === "string" ? reader.result : "";
+                                if (!text) {
+                                        throw new Error("导入文件为空");
+                                }
+                                let parsed;
+                                try {
+                                        parsed = JSON.parse(text);
+                                } catch (parseError) {
+                                        throw new Error("导入文件不是有效的 JSON 格式");
+                                }
+                                if (!parsed || typeof parsed !== "object") {
+                                        throw new Error("导入文件缺少配置数据");
+                                }
+                                setConfigImporting(true);
+                                const response = await fetch("/api/config/import", {
+                                        method: "POST",
+                                        headers: {
+                                                "Content-Type": "application/json",
+                                                "Accept": "application/json"
+                                        },
+                                        body: JSON.stringify(parsed)
+                                });
+                                const data = await response.json().catch(() => ({}));
+                                if (!response.ok) {
+                                        throw new Error(data.error || response.statusText || "导入配置失败");
+                                }
+                                applyConfigPayloadToState(data);
+                                showMessage("配置已导入", false);
+                        } catch (error) {
+                                showMessage((error && error.message) || "导入配置失败", true);
+                        } finally {
+                                setConfigImporting(false);
+                                if (configImportInputRef.current) {
+                                        configImportInputRef.current.value = "";
+                                }
+                        }
+                };
+                reader.onerror = () => {
+                        showMessage("读取导入文件失败", true);
+                        if (configImportInputRef.current) {
+                                configImportInputRef.current.value = "";
+                        }
+                };
+                reader.readAsText(file);
+        }, [applyConfigPayloadToState, configImportInputRef, isConfigLocked, showMessage]);
 
         const handleConfigSubmit = useCallback(async (event) => {
                 event.preventDefault();
@@ -944,55 +1116,6 @@ function App() {
 			setPasswordSaving(false);
 		}
 	}, [passwordInputs.newPassword, passwordInputs.oldPassword, refreshConfigState, showMessage]);
-
-	const handleDirectChatTest = useCallback(async () => {
-		if (isConfigLocked) {
-			showMessage("请先解锁配置", true);
-			return;
-		}
-		let headers;
-		try {
-			headers = buildDirectFetchHeaders(configDraft);
-		} catch (error) {
-			showMessage((error && error.message) || "缺少必要配置", true);
-			return;
-		}
-		const baseURL = resolveBaseURL(configDraft.base_url || config.base_url);
-		const endpoint = baseURL + "/conversations";
-		const params = new URLSearchParams();
-		params.set("offset", "0");
-		params.set("limit", String(clampPageSizeValue(configDraft.page_size)));
-		params.set("order", sanitizeOrder(configDraft.order));
-		params.set("is_archived", configDraft.include_archived ? "true" : "false");
-		params.set("is_starred", "false");
-
-		setDirectTestLoading(true);
-		showMessage("正在发起前端直连测试…", false);
-		try {
-			const response = await fetch(endpoint + "?" + params.toString(), {
-				method: "GET",
-				headers,
-				credentials: "include",
-				mode: "cors"
-			});
-			const data = await response.json().catch(() => null);
-			if (!response.ok) {
-				const messageText = (data && (data.error || data.message)) || response.statusText || "请求失败";
-				throw new Error(messageText);
-			}
-			const items = Array.isArray(data && data.items) ? data.items : [];
-			const sample = items.length > 0 && items[0] ? (items[0].title || items[0].id || "") : "";
-			let text = "前端直连成功，返回 " + items.length + " 条对话";
-			if (sample) {
-				text += "，示例：" + sample;
-			}
-			showMessage(text, false);
-		} catch (error) {
-			showMessage("前端直连失败：" + ((error && error.message) || "未知错误"), true);
-		} finally {
-			setDirectTestLoading(false);
-		}
-	}, [configDraft, config, isConfigLocked, showMessage]);
 
 	const handlePreview = useCallback(async (id) => {
 		if (!id) {
@@ -1302,13 +1425,20 @@ function App() {
 						onReset={handleConfigReset}
 						saving={configSaving}
 						locked={isConfigLocked}
+                                                activeSection={configTab}
+                                                onSectionChange={handleConfigSectionChange}
+                                                onImport={handleConfigImportClick}
+                                                onExport={handleConfigExport}
+                                                importing={configImporting}
+                                                exporting={configExporting}
 				/>
-				<div className="direct-test">
-					<button type="button" onClick={handleDirectChatTest} disabled={isConfigLocked || directTestLoading}>
-						{directTestLoading ? "直连测试中…" : "前端直连测试"}
-					</button>
-					<div className="field-hint">直接使用当前配置请求 ChatGPT 列表，用于验证网络与鉴权是否正常。</div>
-				</div>
+                                <input
+                                        ref={configImportInputRef}
+                                        type="file"
+                                        accept="application/json"
+                                        style={{ display: "none" }}
+                                        onChange={handleConfigImportFile}
+                                />
 				<section className="password-section">
 					<h2>配置密码</h2>
                                                 {configState.hasPassword ? (
