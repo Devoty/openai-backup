@@ -1,18 +1,24 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
 
 const initialConfig = {
-	listen: "",
-	timezone: ""
+        listen: "",
+        timezone: "",
+        target: "anytype"
 };
 
 const initialPreview = {
-	id: "",
-	title: "",
-	createTime: "",
-	updateTime: "",
-	messages: [],
-	loading: false
+        id: "",
+        title: "",
+        createTime: "",
+        updateTime: "",
+        messages: [],
+        loading: false
 };
+
+function normalizeTarget(value) {
+        const lower = typeof value === "string" ? value.trim().toLowerCase() : "";
+        return lower === "notion" ? "notion" : "anytype";
+}
 
 function MessageBar({ message }) {
 	const className = message.error ? "error" : message.text ? "info" : "";
@@ -92,11 +98,12 @@ function App() {
 	const [reloadToken, setReloadToken] = useState(0);
 	const [message, setMessage] = useState({ text: "", error: false });
 	const [selected, setSelected] = useState(() => new Set());
-	const [importLoading, setImportLoading] = useState(false);
-	const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
-	const [singleDeleteLoading, setSingleDeleteLoading] = useState(false);
-	const [preview, setPreview] = useState(initialPreview);
-	const messageTimerRef = useRef(null);
+        const [importLoading, setImportLoading] = useState(false);
+        const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
+        const [singleDeleteLoading, setSingleDeleteLoading] = useState(false);
+        const [preview, setPreview] = useState(initialPreview);
+        const [target, setTarget] = useState(initialConfig.target);
+        const messageTimerRef = useRef(null);
 
 	const selectedIds = useMemo(() => Array.from(selected), [selected]);
 	const selectedCount = selectedIds.length;
@@ -134,12 +141,15 @@ function App() {
 				if (cancelled) {
 					return;
 				}
-				const listen = typeof data.listen === "string" ? data.listen : "";
-				const timezone = typeof data.timezone === "string" ? data.timezone : "";
-				setConfig({
-					listen: listen,
-					timezone: timezone
-				});
+                                const listen = typeof data.listen === "string" ? data.listen : "";
+                                const timezone = typeof data.timezone === "string" ? data.timezone : "";
+                                const targetValue = normalizeTarget(data.target);
+                                setConfig({
+                                        listen: listen,
+                                        timezone: timezone,
+                                        target: targetValue
+                                });
+                                setTarget(targetValue);
 			} catch (error) {
 				if (!cancelled) {
 					showMessage((error && error.message) || "加载配置失败", true);
@@ -262,39 +272,49 @@ function App() {
 		}
 	}, [showMessage]);
 
-	const handleImport = useCallback(async () => {
-		if (selectedCount === 0) {
-			showMessage("请先在列表中勾选需要导入的对话", true);
-			return;
-		}
-		setImportLoading(true);
-		showMessage("正在导入 " + selectedCount + " 条对话…", false);
-		try {
-			const response = await fetch("/api/import", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Accept": "application/json"
-				},
-				body: JSON.stringify({ ids: selectedIds })
-			});
-			const data = await response.json().catch(() => ({}));
-			if (!response.ok) {
-				throw new Error(data.error || response.statusText);
-			}
-			const created = typeof data.created === "number" ? data.created : 0;
-			const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
-			let text = "成功导入 " + created + " 条对话";
-			if (skipped > 0) {
-				text += "，跳过 " + skipped + " 条";
-			}
-			showMessage(text, false);
-		} catch (error) {
-			showMessage(error.message || "导入失败", true);
-		} finally {
-			setImportLoading(false);
-		}
-	}, [selectedCount, selectedIds, showMessage]);
+        const handleImport = useCallback(async () => {
+                if (selectedCount === 0) {
+                        showMessage("请先在列表中勾选需要导入的对话", true);
+                        return;
+                }
+                setImportLoading(true);
+                const targetLabelForMessage = target === "notion" ? "Notion" : "Anytype";
+                showMessage("正在导入 " + selectedCount + " 条对话到 " + targetLabelForMessage + "…", false);
+                try {
+                        const response = await fetch("/api/import", {
+                                method: "POST",
+                                headers: {
+                                        "Content-Type": "application/json",
+                                        "Accept": "application/json"
+                                },
+                                body: JSON.stringify({ ids: selectedIds, target })
+                        });
+                        const data = await response.json().catch(() => ({}));
+                        if (!response.ok) {
+                                throw new Error(data.error || response.statusText);
+                        }
+                        const created = typeof data.created === "number" ? data.created : 0;
+                        const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
+                        const responseTarget = normalizeTarget(data.target);
+                        const responseLabel = responseTarget === "notion" ? "Notion" : "Anytype";
+                        let text = "成功导入 " + created + " 条对话到 " + responseLabel;
+                        if (skipped > 0) {
+                                text += "，跳过 " + skipped + " 条";
+                        }
+                        if (responseTarget === "notion" && Array.isArray(data.pages) && data.pages.length > 0) {
+                                const sample = data.pages.slice(0, 3).join(", ");
+                                text += "，Notion 页面: " + sample;
+                                if (data.pages.length > 3) {
+                                        text += " 等";
+                                }
+                        }
+                        showMessage(text, false);
+                } catch (error) {
+                        showMessage(error.message || "导入失败", true);
+                } finally {
+                        setImportLoading(false);
+                }
+        }, [selectedCount, selectedIds, target, showMessage]);
 
 	const adjustAfterDelete = useCallback((deletedIds, deletedCount, clearPreviewFlag) => {
 		const count = deletedCount >= 0 ? deletedCount : deletedIds.length;
@@ -412,15 +432,29 @@ function App() {
 		return Math.floor(offset / limit) + 1;
 	}, [offset, limit, totalPages]);
 
-	const pageInfoText = totalPages > 0 ? "第 " + currentPage + " / " + totalPages + " 页" : loading ? "正在加载…" : "暂无对话";
-	const listenLabel = config.listen || "";
-	const timezoneLabel = config.timezone || "";
-	const totalLabel = "(" + total + ")";
-	const importLabel = importLoading ? "导入中…" : selectedCount > 0 ? "导入所选 (" + selectedCount + ")" : "导入所选";
-	const bulkDeleteLabel = bulkDeleteLoading ? "删除中…" : selectedCount > 0 ? "删除所选 (" + selectedCount + ")" : "删除所选";
-	const singleDeleteLabel = singleDeleteLoading ? "删除中…" : "删除该对话";
-	const canPrev = !loading && offset > 0;
-	const canNext = !loading && ((hasMore && limit > 0) || (total > 0 && limit > 0 && offset + limit < total));
+        const pageInfoText = totalPages > 0 ? "第 " + currentPage + " / " + totalPages + " 页" : loading ? "正在加载…" : "暂无对话";
+        const listenLabel = config.listen || "";
+        const timezoneLabel = config.timezone || "";
+        const totalLabel = "(" + total + ")";
+        const targetLabel = target === "notion" ? "Notion" : "Anytype";
+        const importLabel = importLoading
+                ? "导入中…"
+                : selectedCount > 0
+                        ? "导入所选到 " + targetLabel + " (" + selectedCount + ")"
+                        : "导入所选到 " + targetLabel;
+        const bulkDeleteLabel = bulkDeleteLoading ? "删除中…" : selectedCount > 0 ? "删除所选 (" + selectedCount + ")" : "删除所选";
+        const singleDeleteLabel = singleDeleteLoading ? "删除中…" : "删除该对话";
+        const canPrev = !loading && offset > 0;
+        const canNext = !loading && ((hasMore && limit > 0) || (total > 0 && limit > 0 && offset + limit < total));
+        const targetHint = target === "notion"
+                ? "将对话同步到 Notion，请确保已在后端配置 Notion API 参数。"
+                : "将对话同步到 Anytype 空间。";
+
+        const handleTargetChange = useCallback((event) => {
+                const nextTarget = normalizeTarget(event.target.value);
+                setTarget(nextTarget);
+                setConfig((prev) => ({ ...prev, target: nextTarget }));
+        }, []);
 
 	return (
 		<React.Fragment>
@@ -429,12 +463,20 @@ function App() {
 				<div className="meta">
 					<span>监听地址: {listenLabel}</span>
 					<span>输出时区: {timezoneLabel || "-"}</span>
-					<div className="controls">
-						<button type="button" onClick={handleReload} disabled={loading}>刷新列表</button>
-						<button type="button" onClick={handleImport} disabled={selectedCount === 0 || importLoading}>{importLabel}</button>
-						<button type="button" className="danger" onClick={handleBulkDelete} disabled={selectedCount === 0 || bulkDeleteLoading}>{bulkDeleteLabel}</button>
-					</div>
-				</div>
+                                        <div className="controls">
+                                                <label className="inline-select">
+                                                        导出目标
+                                                        <select value={target} onChange={handleTargetChange}>
+                                                                <option value="anytype">Anytype</option>
+                                                                <option value="notion">Notion</option>
+                                                        </select>
+                                                </label>
+                                                <button type="button" onClick={handleReload} disabled={loading}>刷新列表</button>
+                                                <button type="button" onClick={handleImport} disabled={selectedCount === 0 || importLoading}>{importLabel}</button>
+                                                <button type="button" className="danger" onClick={handleBulkDelete} disabled={selectedCount === 0 || bulkDeleteLoading}>{bulkDeleteLabel}</button>
+                                        </div>
+                                        <div className="target-hint">{targetHint}</div>
+                                </div>
 				<MessageBar message={message} />
 			</header>
 			<main>

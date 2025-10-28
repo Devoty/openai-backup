@@ -16,6 +16,11 @@ import (
 func main() {
 	// CLI 入口: 解析参数、初始化日志和 HTTP 客户端。
 	cfg := parseFlags()
+	target := strings.TrimSpace(cfg.ExportTarget)
+	if target == "" {
+		target = defaultExportTarget
+	}
+	target = strings.ToLower(target)
 	token := strings.TrimSpace(cfg.Token)
 	if token == "" {
 		token = strings.TrimSpace(os.Getenv(tokenEnvVar))
@@ -37,14 +42,14 @@ func main() {
 	defer cancel()
 
 	if cfg.ServeMode {
-		logInfo("启动 Web 界面, 输出时区=%s, 监听地址=%s", cfg.OutputTimezone, cfg.ServeAddr)
+		logInfo("启动 Web 界面, 输出时区=%s, 监听地址=%s, 默认导出目标=%s", cfg.OutputTimezone, cfg.ServeAddr, target)
 		if err := runWebServer(ctx, client, cfg, token); err != nil {
 			exitWithError(fmt.Errorf("启动 Web 界面失败: %w", err))
 		}
 		return
 	}
 
-	logInfo("启动导出流程, 输出时区=%s, AnytypeSpace=%s, TypeKey=%s", cfg.OutputTimezone, cfg.AnytypeSpaceID, cfg.AnytypeTypeKey)
+	logInfo("启动导出流程, 输出时区=%s, 目标=%s", cfg.OutputTimezone, target)
 
 	conversations, err := fetchAllConversations(ctx, client, cfg, token)
 	if err != nil {
@@ -73,54 +78,82 @@ func main() {
 		exitWithError(errors.New("没有可导出的对话内容"))
 	}
 
-	anyClient, err := newAnytypeClient(cfg, client)
-	if err != nil {
-		exitWithError(err)
-	}
+	switch target {
+	case exportTargetAnytype:
+		anyClient, err := newAnytypeClient(cfg, client)
+		if err != nil {
+			exitWithError(err)
+		}
 
-	created, err := syncConversationsToAnytype(ctx, anyClient, exports, cfg.OutputTimezone)
-	if err != nil {
-		exitWithError(err)
-	}
+		created, err := syncConversationsToAnytype(ctx, anyClient, exports, cfg.OutputTimezone)
+		if err != nil {
+			exitWithError(err)
+		}
 
-	fmt.Printf("已导出 %d 个对话到 Anytype 空间 %s\n", created, cfg.AnytypeSpaceID)
-	logInfo("导出完成, 对话数=%d, AnytypeSpace=%s", created, cfg.AnytypeSpaceID)
+		fmt.Printf("已导出 %d 个对话到 Anytype 空间 %s\n", created, cfg.AnytypeSpaceID)
+		logInfo("导出完成, 对话数=%d, 目标=Anytype, Space=%s", created, cfg.AnytypeSpaceID)
+	case exportTargetNotion:
+		notionClient, err := newNotionClient(cfg, client)
+		if err != nil {
+			exitWithError(err)
+		}
+
+		created, pageIDs, err := syncConversationsToNotion(ctx, notionClient, exports, cfg.OutputTimezone)
+		if err != nil {
+			exitWithError(err)
+		}
+
+		fmt.Printf("已导出 %d 个对话到 Notion %s %s\n", created, firstNonEmpty(cfg.NotionParentType, "parent"), cfg.NotionParentID)
+		if len(pageIDs) > 0 {
+			logInfo("Notion 页面创建列表: %v", pageIDs)
+		}
+		logInfo("导出完成, 对话数=%d, 目标=Notion, ParentType=%s, ParentID=%s", created, cfg.NotionParentType, cfg.NotionParentID)
+	default:
+		exitWithError(fmt.Errorf("不支持的导出目标: %s", target))
+	}
 }
 
 type cliConfig struct {
-	BaseURL          string
-	OutputPath       string
-	Order            string
-	PageSize         int
-	MaxConversations int
-	InitialOffset    int
-	IncludeArchived  bool
-	Token            string
-	OutputTimezone   string
-	DeviceID         string
-	UserAgent        string
-	AcceptLanguage   string
-	Referer          string
-	Cookie           string
-	Origin           string
-	OaiLanguage      string
-	SecChUA          string
-	SecChUAMobile    string
-	SecChUAPlatform  string
-	SecFetchDest     string
-	SecFetchMode     string
-	SecFetchSite     string
-	ChatGPTAccountID string
-	OAIClientVersion string
-	Priority         string
-	LogPath          string
-	AnytypeBaseURL   string
-	AnytypeVersion   string
-	AnytypeSpaceID   string
-	AnytypeTypeKey   string
-	AnytypeToken     string
-	ServeMode        bool
-	ServeAddr        string
+	BaseURL             string
+	OutputPath          string
+	Order               string
+	PageSize            int
+	MaxConversations    int
+	InitialOffset       int
+	IncludeArchived     bool
+	Token               string
+	OutputTimezone      string
+	DeviceID            string
+	UserAgent           string
+	AcceptLanguage      string
+	Referer             string
+	Cookie              string
+	Origin              string
+	OaiLanguage         string
+	SecChUA             string
+	SecChUAMobile       string
+	SecChUAPlatform     string
+	SecFetchDest        string
+	SecFetchMode        string
+	SecFetchSite        string
+	ChatGPTAccountID    string
+	OAIClientVersion    string
+	Priority            string
+	LogPath             string
+	AnytypeBaseURL      string
+	AnytypeVersion      string
+	AnytypeSpaceID      string
+	AnytypeTypeKey      string
+	AnytypeToken        string
+	NotionBaseURL       string
+	NotionVersion       string
+	NotionToken         string
+	NotionParentType    string
+	NotionParentID      string
+	NotionTitleProperty string
+	ExportTarget        string
+	ServeMode           bool
+	ServeAddr           string
 }
 
 func parseFlags() *cliConfig {
@@ -134,6 +167,7 @@ func parseFlags() *cliConfig {
 	flag.IntVar(&cfg.InitialOffset, "offset", 0, "从指定 offset 开始读取")
 	flag.BoolVar(&cfg.IncludeArchived, "include-archived", false, "是否包含已归档对话")
 	flag.StringVar(&cfg.OutputTimezone, "timezone", "Local", "输出内容中的时间时区 (Local 或 UTC)")
+	flag.StringVar(&cfg.ExportTarget, "target", defaultExportTarget, "导出目标 (anytype 或 notion)")
 	flag.StringVar(&cfg.DeviceID, "device-id", "", "oai-device-id 请求头 (默认从环境变量 "+deviceIDEnvVar+" 读取)")
 	flag.StringVar(&cfg.UserAgent, "user-agent", "", "自定义 User-Agent (默认从环境变量 "+userAgentEnvVar+" 读取, 再回退内置值)")
 	flag.StringVar(&cfg.AcceptLanguage, "accept-language", "", "Accept-Language 请求头 (默认从环境变量 "+acceptLangEnvVar+" 读取)")
@@ -156,6 +190,12 @@ func parseFlags() *cliConfig {
 	flag.StringVar(&cfg.AnytypeVersion, "anytype-version", "", "Anytype API 版本 (默认 "+defaultAnytypeVersion+")")
 	flag.StringVar(&cfg.AnytypeSpaceID, "anytype-space-id", "", "Anytype 目标空间 ID (默认从环境变量 "+anytypeSpaceIDEnvVar+" 读取)")
 	flag.StringVar(&cfg.AnytypeTypeKey, "anytype-type-key", "", "Anytype 对象类型 key (默认 "+defaultAnytypeTypeKey+")")
+	flag.StringVar(&cfg.NotionToken, "notion-token", "", "Notion API Key (默认从环境变量 "+notionTokenEnvVar+" 读取)")
+	flag.StringVar(&cfg.NotionBaseURL, "notion-base-url", "", "Notion API 基础地址 (默认 "+defaultNotionBaseURL+")")
+	flag.StringVar(&cfg.NotionVersion, "notion-version", "", "Notion API 版本 (默认 "+defaultNotionVersion+")")
+	flag.StringVar(&cfg.NotionParentType, "notion-parent-type", "", "Notion 父级类型 (page 或 database)")
+	flag.StringVar(&cfg.NotionParentID, "notion-parent-id", "", "Notion 父级页面/数据库 ID (默认从环境变量 "+notionParentIDEnvVar+" 读取)")
+	flag.StringVar(&cfg.NotionTitleProperty, "notion-title-property", "", "Notion 标题属性名称 (数据库默认 "+defaultNotionDatabaseTitleProp+")")
 	flag.BoolVar(&cfg.ServeMode, "serve", false, "启动 Web 界面以浏览和导入对话")
 	flag.StringVar(&cfg.ServeAddr, "listen", "127.0.0.1:8080", "Web 界面监听地址")
 	flag.Parse()
@@ -236,6 +276,41 @@ func parseFlags() *cliConfig {
 	}
 	if cfg.AnytypeTypeKey == "" {
 		cfg.AnytypeTypeKey = defaultAnytypeTypeKey
+	}
+	if cfg.ExportTarget == "" {
+		cfg.ExportTarget = strings.TrimSpace(os.Getenv(exportTargetEnvVar))
+	}
+	cfg.ExportTarget = strings.ToLower(strings.TrimSpace(cfg.ExportTarget))
+	if cfg.ExportTarget == "" {
+		cfg.ExportTarget = defaultExportTarget
+	}
+	if cfg.NotionToken == "" {
+		cfg.NotionToken = strings.TrimSpace(os.Getenv(notionTokenEnvVar))
+	}
+	if cfg.NotionBaseURL == "" {
+		cfg.NotionBaseURL = strings.TrimSpace(os.Getenv(notionBaseURLEnvVar))
+	}
+	cfg.NotionBaseURL = strings.TrimSpace(cfg.NotionBaseURL)
+	if cfg.NotionBaseURL == "" {
+		cfg.NotionBaseURL = defaultNotionBaseURL
+	} else {
+		cfg.NotionBaseURL = strings.TrimRight(cfg.NotionBaseURL, "/")
+	}
+	if cfg.NotionVersion == "" {
+		cfg.NotionVersion = strings.TrimSpace(os.Getenv(notionVersionEnvVar))
+	}
+	if cfg.NotionVersion == "" {
+		cfg.NotionVersion = defaultNotionVersion
+	}
+	if cfg.NotionParentType == "" {
+		cfg.NotionParentType = strings.TrimSpace(os.Getenv(notionParentTypeEnvVar))
+	}
+	cfg.NotionParentType = strings.ToLower(strings.TrimSpace(cfg.NotionParentType))
+	if cfg.NotionParentID == "" {
+		cfg.NotionParentID = strings.TrimSpace(os.Getenv(notionParentIDEnvVar))
+	}
+	if cfg.NotionTitleProperty == "" {
+		cfg.NotionTitleProperty = strings.TrimSpace(os.Getenv(notionTitlePropertyEnvVar))
 	}
 	return cfg
 }
