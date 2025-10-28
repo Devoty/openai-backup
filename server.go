@@ -57,6 +57,9 @@ type webServer struct {
 
 	anyClientMu sync.Mutex
 	anyClient   *anytypeClient
+
+	notionClientMu sync.Mutex
+	notionClient   *notionClient
 }
 
 //go:embed web/dist/*
@@ -131,9 +134,14 @@ func (s *webServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	target := strings.TrimSpace(s.cfg.ExportTarget)
+	if target == "" {
+		target = defaultExportTarget
+	}
 	payload := map[string]string{
 		"listen":   strings.TrimSpace(s.cfg.ServeAddr),
 		"timezone": strings.TrimSpace(s.cfg.OutputTimezone),
+		"target":   target,
 	}
 	writeJSON(w, http.StatusOK, payload)
 }
@@ -285,23 +293,60 @@ func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	client, err := s.resolveAnytypeClient()
-	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
+	target := strings.TrimSpace(req.Target)
+	if target == "" {
+		target = s.cfg.ExportTarget
+	}
+	if target == "" {
+		target = defaultExportTarget
+	}
+	target = strings.ToLower(target)
+
+	logInfo("Web 导入触发: 选中=%d 有效=%d 目标=%s", len(req.IDs), len(exports), target)
+
+	var (
+		created     int
+		pages       []string
+		syncErr     error
+		targetLabel = target
+	)
+
+	switch target {
+	case exportTargetAnytype:
+		targetLabel = "Anytype"
+		client, err := s.resolveAnytypeClient()
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		created, syncErr = syncConversationsToAnytype(ctx, client, exports, s.cfg.OutputTimezone)
+	case exportTargetNotion:
+		targetLabel = "Notion"
+		client, err := s.resolveNotionClient()
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		created, pages, syncErr = syncConversationsToNotion(ctx, client, exports, s.cfg.OutputTimezone)
+	default:
+		writeError(w, http.StatusBadRequest, fmt.Sprintf("不支持的导出目标: %s", target))
 		return
 	}
 
-	logInfo("Web 导入触发: 选中=%d 有效=%d", len(req.IDs), len(exports))
-	created, err := syncConversationsToAnytype(ctx, client, exports, s.cfg.OutputTimezone)
-	if err != nil {
-		writeError(w, http.StatusBadGateway, fmt.Sprintf("导入 Anytype 失败: %v", err))
+	if syncErr != nil {
+		writeError(w, http.StatusBadGateway, fmt.Sprintf("导入 %s 失败: %v", targetLabel, syncErr))
 		return
 	}
 
-	writeJSON(w, http.StatusOK, map[string]interface{}{
+	response := map[string]interface{}{
 		"created": created,
 		"skipped": skipped,
-	})
+		"target":  target,
+	}
+	if len(pages) > 0 {
+		response["pages"] = pages
+	}
+	writeJSON(w, http.StatusOK, response)
 }
 
 func (s *webServer) handleDelete(w http.ResponseWriter, r *http.Request) {
@@ -497,6 +542,20 @@ func (s *webServer) resolveAnytypeClient() (*anytypeClient, error) {
 	return client, nil
 }
 
+func (s *webServer) resolveNotionClient() (*notionClient, error) {
+	s.notionClientMu.Lock()
+	defer s.notionClientMu.Unlock()
+	if s.notionClient != nil {
+		return s.notionClient, nil
+	}
+	client, err := newNotionClient(s.cfg, s.httpClient)
+	if err != nil {
+		return nil, err
+	}
+	s.notionClient = client
+	return client, nil
+}
+
 type apiConversationItem struct {
 	ID         string `json:"id"`
 	Title      string `json:"title"`
@@ -519,7 +578,8 @@ type apiConversationDetail struct {
 }
 
 type importRequest struct {
-	IDs []string `json:"ids"`
+	IDs    []string `json:"ids"`
+	Target string   `json:"target"`
 }
 
 type deleteRequest struct {
