@@ -14,19 +14,19 @@ import (
 )
 
 func main() {
-	// CLI 入口: 解析参数、初始化日志和 HTTP 客户端。
 	cfg := parseFlags()
-	target := strings.TrimSpace(cfg.ExportTarget)
-
-	target = strings.ToLower(target)
-	token := strings.TrimSpace(cfg.Token)
-	if token == "" {
-		token = strings.TrimSpace(os.Getenv(tokenEnvVar))
+	if err := runApp(cfg); err != nil {
+		exitWithError(err)
 	}
+}
+
+func runApp(cfg *cliConfig) error {
+	target := normalizeTarget(cfg.ExportTarget)
+	token := resolveToken(cfg.Token)
 
 	logCloser, err := setupLogger(cfg.LogPath)
 	if err != nil {
-		exitWithError(fmt.Errorf("初始化日志失败: %w", err))
+		return fmt.Errorf("初始化日志失败: %w", err)
 	}
 	defer logCloser.Close()
 
@@ -37,11 +37,15 @@ func main() {
 	defer cancel()
 
 	if cfg.ServeMode {
-		logInfo("启动 Web 界面, 输出时区=%s, 监听地址=%s, 默认导出目标=%s", cfg.OutputTimezone, cfg.ServeAddr, target)
-		if err := runWebServer(ctx, client, cfg, token); err != nil {
-			exitWithError(fmt.Errorf("启动 Web 界面失败: %w", err))
+		serveTarget := target
+		if serveTarget == "" {
+			serveTarget = defaultExportTarget
 		}
-		return
+		logInfo("启动 Web 界面, 输出时区=%s, 监听地址=%s, 默认导出目标=%s", cfg.OutputTimezone, cfg.ServeAddr, serveTarget)
+		if err := runWebServer(ctx, client, cfg, token); err != nil {
+			return fmt.Errorf("启动 Web 界面失败: %w", err)
+		}
+		return nil
 	}
 
 	if target == "" {
@@ -49,17 +53,45 @@ func main() {
 	}
 
 	if token == "" {
-		exitWithError(errors.New("missing bearer token: provide --token or set " + tokenEnvVar))
+		return errors.New("missing bearer token: provide --token or set " + tokenEnvVar)
 	}
-	logInfo("启动导出流程, 输出时区=%s, 目标=%s", cfg.OutputTimezone, target)
 
+	logInfo("启动导出流程, 输出时区=%s, 目标=%s", cfg.OutputTimezone, target)
+	exports, err := collectConversationsForExport(ctx, client, cfg, token)
+	if err != nil {
+		return err
+	}
+	if len(exports) == 0 {
+		return errors.New("没有可导出的对话内容")
+	}
+
+	return exportConversations(ctx, client, cfg, target, exports)
+}
+
+func normalizeTarget(target string) string {
+	target = strings.TrimSpace(target)
+	if target == "" {
+		return ""
+	}
+	return strings.ToLower(target)
+}
+
+func resolveToken(token string) string {
+	token = strings.TrimSpace(token)
+	if token != "" {
+		return token
+	}
+	return strings.TrimSpace(os.Getenv(tokenEnvVar))
+}
+
+func collectConversationsForExport(ctx context.Context, client *http.Client, cfg *cliConfig, token string) ([]exportConversation, error) {
 	conversations, err := fetchAllConversations(ctx, client, cfg, token)
 	if err != nil {
-		exitWithError(fmt.Errorf("获取对话列表失败: %w", err))
+		return nil, fmt.Errorf("获取对话列表失败: %w", err)
 	}
 	logInfo("对话列表获取完成, 数量=%d", len(conversations))
 
-	var exports []exportConversation
+	exports := make([]exportConversation, 0, len(conversations))
 	for _, meta := range conversations {
 		logInfo("拉取对话详情: id=%s title=%s", meta.ID, meta.Title)
 		detail, err := fetchConversationDetail(ctx, client, cfg, token, meta.ID)
@@ -76,33 +108,34 @@ func main() {
 		exports = append(exports, export)
 	}
 
-	if len(exports) == 0 {
-		exitWithError(errors.New("没有可导出的对话内容"))
-	}
+	return exports, nil
+}
 
+func exportConversations(ctx context.Context, client *http.Client, cfg *cliConfig, target string, exports []exportConversation) error {
 	switch target {
 	case exportTargetAnytype:
 		anyClient, err := newAnytypeClient(cfg, client)
 		if err != nil {
-			exitWithError(err)
+			return err
 		}
 
 		created, err := syncConversationsToAnytype(ctx, anyClient, exports, cfg.OutputTimezone)
 		if err != nil {
-			exitWithError(err)
+			return err
 		}
 
 		fmt.Printf("已导出 %d 个对话到 Anytype 空间 %s\n", created, cfg.AnytypeSpaceID)
 		logInfo("导出完成, 对话数=%d, 目标=Anytype, Space=%s", created, cfg.AnytypeSpaceID)
+		return nil
 	case exportTargetNotion:
 		notionClient, err := newNotionClient(cfg, client)
 		if err != nil {
-			exitWithError(err)
+			return err
 		}
 
 		created, pageIDs, err := syncConversationsToNotion(ctx, notionClient, exports, cfg.OutputTimezone)
 		if err != nil {
-			exitWithError(err)
+			return err
 		}
 
 		fmt.Printf("已导出 %d 个对话到 Notion %s %s\n", created, firstNonEmpty(cfg.NotionParentType, "parent"), cfg.NotionParentID)
@@ -110,8 +143,9 @@ func main() {
 			logInfo("Notion 页面创建列表: %v", pageIDs)
 		}
 		logInfo("导出完成, 对话数=%d, 目标=Notion, ParentType=%s, ParentID=%s", created, cfg.NotionParentType, cfg.NotionParentID)
+		return nil
 	default:
-		exitWithError(fmt.Errorf("不支持的导出目标: %s", target))
+		return fmt.Errorf("不支持的导出目标: %s", target)
 	}
 }
 
