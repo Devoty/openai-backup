@@ -46,8 +46,9 @@ func cloneConversationPage(src *conversationListResponse) *conversationListRespo
 type webServer struct {
 	cfg        *cliConfig
 	httpClient *http.Client
-	token      string
 	location   *time.Location
+
+	configMu sync.RWMutex
 
 	cacheMu   sync.RWMutex
 	pageCache map[convPageKey]conversationPageCacheEntry
@@ -60,6 +61,88 @@ type webServer struct {
 
 	notionClientMu sync.Mutex
 	notionClient   *notionClient
+}
+
+type configPayload struct {
+	Listen              string `json:"listen"`
+	Timezone            string `json:"timezone"`
+	Target              string `json:"target"`
+	BaseURL             string `json:"base_url"`
+	Order               string `json:"order"`
+	PageSize            int    `json:"page_size"`
+	MaxConversations    int    `json:"max_conversations"`
+	InitialOffset       int    `json:"initial_offset"`
+	IncludeArchived     bool   `json:"include_archived"`
+	Token               string `json:"token"`
+	DeviceID            string `json:"device_id"`
+	UserAgent           string `json:"user_agent"`
+	AcceptLanguage      string `json:"accept_language"`
+	Referer             string `json:"referer"`
+	Cookie              string `json:"cookie"`
+	Origin              string `json:"origin"`
+	OaiLanguage         string `json:"oai_language"`
+	SecChUA             string `json:"sec_ch_ua"`
+	SecChUAMobile       string `json:"sec_ch_ua_mobile"`
+	SecChUAPlatform     string `json:"sec_ch_ua_platform"`
+	SecFetchDest        string `json:"sec_fetch_dest"`
+	SecFetchMode        string `json:"sec_fetch_mode"`
+	SecFetchSite        string `json:"sec_fetch_site"`
+	ChatGPTAccountID    string `json:"chatgpt_account_id"`
+	OAIClientVersion    string `json:"oai_client_version"`
+	Priority            string `json:"priority"`
+	LogPath             string `json:"log_path"`
+	AnytypeBaseURL      string `json:"anytype_base_url"`
+	AnytypeVersion      string `json:"anytype_version"`
+	AnytypeSpaceID      string `json:"anytype_space_id"`
+	AnytypeTypeKey      string `json:"anytype_type_key"`
+	AnytypeToken        string `json:"anytype_token"`
+	NotionBaseURL       string `json:"notion_base_url"`
+	NotionVersion       string `json:"notion_version"`
+	NotionToken         string `json:"notion_token"`
+	NotionParentType    string `json:"notion_parent_type"`
+	NotionParentID      string `json:"notion_parent_id"`
+	NotionTitleProperty string `json:"notion_title_property"`
+}
+
+type configUpdate struct {
+	Listen              *string `json:"listen"`
+	Timezone            *string `json:"timezone"`
+	Target              *string `json:"target"`
+	BaseURL             *string `json:"base_url"`
+	Order               *string `json:"order"`
+	PageSize            *int    `json:"page_size"`
+	MaxConversations    *int    `json:"max_conversations"`
+	InitialOffset       *int    `json:"initial_offset"`
+	IncludeArchived     *bool   `json:"include_archived"`
+	Token               *string `json:"token"`
+	DeviceID            *string `json:"device_id"`
+	UserAgent           *string `json:"user_agent"`
+	AcceptLanguage      *string `json:"accept_language"`
+	Referer             *string `json:"referer"`
+	Cookie              *string `json:"cookie"`
+	Origin              *string `json:"origin"`
+	OaiLanguage         *string `json:"oai_language"`
+	SecChUA             *string `json:"sec_ch_ua"`
+	SecChUAMobile       *string `json:"sec_ch_ua_mobile"`
+	SecChUAPlatform     *string `json:"sec_ch_ua_platform"`
+	SecFetchDest        *string `json:"sec_fetch_dest"`
+	SecFetchMode        *string `json:"sec_fetch_mode"`
+	SecFetchSite        *string `json:"sec_fetch_site"`
+	ChatGPTAccountID    *string `json:"chatgpt_account_id"`
+	OAIClientVersion    *string `json:"oai_client_version"`
+	Priority            *string `json:"priority"`
+	LogPath             *string `json:"log_path"`
+	AnytypeBaseURL      *string `json:"anytype_base_url"`
+	AnytypeVersion      *string `json:"anytype_version"`
+	AnytypeSpaceID      *string `json:"anytype_space_id"`
+	AnytypeTypeKey      *string `json:"anytype_type_key"`
+	AnytypeToken        *string `json:"anytype_token"`
+	NotionBaseURL       *string `json:"notion_base_url"`
+	NotionVersion       *string `json:"notion_version"`
+	NotionToken         *string `json:"notion_token"`
+	NotionParentType    *string `json:"notion_parent_type"`
+	NotionParentID      *string `json:"notion_parent_id"`
+	NotionTitleProperty *string `json:"notion_title_property"`
 }
 
 //go:embed web/dist/*
@@ -104,11 +187,20 @@ func runWebServer(ctx context.Context, httpClient *http.Client, cfg *cliConfig, 
 }
 
 func newWebServer(httpClient *http.Client, cfg *cliConfig, token string) *webServer {
-	loc := resolveLocation(cfg.OutputTimezone)
+	cfgCopy := *cfg
+	cfgCopy.Token = strings.TrimSpace(token)
+	cfgCopy.ExportTarget = normalizeExportTarget(cfgCopy.ExportTarget)
+	cfgCopy.Order = normalizeOrder(cfgCopy.Order)
+	cfgCopy.BaseURL = ensureBaseURL(cfgCopy.BaseURL)
+	cfgCopy.PageSize = clampPageSize(cfgCopy.PageSize)
+	cfgCopy.MaxConversations = nonNegative(cfgCopy.MaxConversations)
+	cfgCopy.InitialOffset = nonNegative(cfgCopy.InitialOffset)
+	cfgCopy.NotionParentType = sanitizeNotionParentType(cfgCopy.NotionParentType)
+	cfgCopy.OutputTimezone = strings.TrimSpace(cfgCopy.OutputTimezone)
+	loc := resolveLocation(cfgCopy.OutputTimezone)
 	return &webServer{
-		cfg:         cfg,
+		cfg:         &cfgCopy,
 		httpClient:  httpClient,
-		token:       token,
 		location:    loc,
 		pageCache:   make(map[convPageKey]conversationPageCacheEntry),
 		detailCache: make(map[string]detailCacheEntry),
@@ -130,20 +222,266 @@ func (s *webServer) routes() http.Handler {
 }
 
 func (s *webServer) handleConfig(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+	switch r.Method {
+	case http.MethodGet:
+		payload := s.currentConfigPayload()
+		writeJSON(w, http.StatusOK, payload)
+	case http.MethodPost:
+		defer r.Body.Close()
+		var input configUpdate
+		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("解析配置失败: %v", err))
+			return
+		}
+		payload, err := s.updateConfig(input)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		writeJSON(w, http.StatusOK, payload)
+	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
 	}
-	target := strings.TrimSpace(s.cfg.ExportTarget)
-	if target == "" {
-		target = defaultExportTarget
+}
+
+func (s *webServer) currentConfigPayload() configPayload {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	return configToPayload(s.cfg)
+}
+
+func configToPayload(cfg *cliConfig) configPayload {
+	if cfg == nil {
+		return configPayload{}
 	}
-	payload := map[string]string{
-		"listen":   strings.TrimSpace(s.cfg.ServeAddr),
-		"timezone": strings.TrimSpace(s.cfg.OutputTimezone),
-		"target":   target,
+	payload := configPayload{
+		Listen:              strings.TrimSpace(cfg.ServeAddr),
+		Timezone:            strings.TrimSpace(cfg.OutputTimezone),
+		Target:              normalizeExportTarget(cfg.ExportTarget),
+		BaseURL:             strings.TrimSpace(cfg.BaseURL),
+		Order:               normalizeOrder(cfg.Order),
+		PageSize:            clampPageSize(cfg.PageSize),
+		MaxConversations:    nonNegative(cfg.MaxConversations),
+		InitialOffset:       nonNegative(cfg.InitialOffset),
+		IncludeArchived:     cfg.IncludeArchived,
+		Token:               strings.TrimSpace(cfg.Token),
+		DeviceID:            strings.TrimSpace(cfg.DeviceID),
+		UserAgent:           strings.TrimSpace(cfg.UserAgent),
+		AcceptLanguage:      strings.TrimSpace(cfg.AcceptLanguage),
+		Referer:             strings.TrimSpace(cfg.Referer),
+		Cookie:              strings.TrimSpace(cfg.Cookie),
+		Origin:              strings.TrimSpace(cfg.Origin),
+		OaiLanguage:         strings.TrimSpace(cfg.OaiLanguage),
+		SecChUA:             strings.TrimSpace(cfg.SecChUA),
+		SecChUAMobile:       strings.TrimSpace(cfg.SecChUAMobile),
+		SecChUAPlatform:     strings.TrimSpace(cfg.SecChUAPlatform),
+		SecFetchDest:        strings.TrimSpace(cfg.SecFetchDest),
+		SecFetchMode:        strings.TrimSpace(cfg.SecFetchMode),
+		SecFetchSite:        strings.TrimSpace(cfg.SecFetchSite),
+		ChatGPTAccountID:    strings.TrimSpace(cfg.ChatGPTAccountID),
+		OAIClientVersion:    strings.TrimSpace(cfg.OAIClientVersion),
+		Priority:            strings.TrimSpace(cfg.Priority),
+		LogPath:             strings.TrimSpace(cfg.LogPath),
+		AnytypeBaseURL:      strings.TrimSpace(cfg.AnytypeBaseURL),
+		AnytypeVersion:      strings.TrimSpace(cfg.AnytypeVersion),
+		AnytypeSpaceID:      strings.TrimSpace(cfg.AnytypeSpaceID),
+		AnytypeTypeKey:      strings.TrimSpace(cfg.AnytypeTypeKey),
+		AnytypeToken:        strings.TrimSpace(cfg.AnytypeToken),
+		NotionBaseURL:       strings.TrimSpace(cfg.NotionBaseURL),
+		NotionVersion:       strings.TrimSpace(cfg.NotionVersion),
+		NotionToken:         strings.TrimSpace(cfg.NotionToken),
+		NotionParentType:    sanitizeNotionParentType(cfg.NotionParentType),
+		NotionParentID:      strings.TrimSpace(cfg.NotionParentID),
+		NotionTitleProperty: strings.TrimSpace(cfg.NotionTitleProperty),
 	}
-	writeJSON(w, http.StatusOK, payload)
+	if payload.BaseURL == "" {
+		payload.BaseURL = defaultBaseURL
+	}
+	return payload
+}
+
+func (s *webServer) updateConfig(input configUpdate) (configPayload, error) {
+	s.configMu.Lock()
+	cfg := s.cfg
+
+	if input.Listen != nil {
+		cfg.ServeAddr = strings.TrimSpace(*input.Listen)
+	}
+	if input.Timezone != nil {
+		cfg.OutputTimezone = strings.TrimSpace(*input.Timezone)
+	}
+	if input.Target != nil {
+		cfg.ExportTarget = normalizeExportTarget(*input.Target)
+	}
+	if input.BaseURL != nil {
+		cfg.BaseURL = ensureBaseURL(*input.BaseURL)
+	}
+	if input.Order != nil {
+		cfg.Order = normalizeOrder(*input.Order)
+	}
+	if input.PageSize != nil {
+		cfg.PageSize = clampPageSize(*input.PageSize)
+	}
+	if input.MaxConversations != nil {
+		cfg.MaxConversations = nonNegative(*input.MaxConversations)
+	}
+	if input.InitialOffset != nil {
+		cfg.InitialOffset = nonNegative(*input.InitialOffset)
+	}
+	if input.IncludeArchived != nil {
+		cfg.IncludeArchived = *input.IncludeArchived
+	}
+	if input.Token != nil {
+		cfg.Token = strings.TrimSpace(*input.Token)
+	}
+	if input.DeviceID != nil {
+		cfg.DeviceID = strings.TrimSpace(*input.DeviceID)
+	}
+	if input.UserAgent != nil {
+		cfg.UserAgent = strings.TrimSpace(*input.UserAgent)
+	}
+	if input.AcceptLanguage != nil {
+		cfg.AcceptLanguage = strings.TrimSpace(*input.AcceptLanguage)
+	}
+	if input.Referer != nil {
+		cfg.Referer = strings.TrimSpace(*input.Referer)
+	}
+	if input.Cookie != nil {
+		cfg.Cookie = strings.TrimSpace(*input.Cookie)
+	}
+	if input.Origin != nil {
+		cfg.Origin = strings.TrimSpace(*input.Origin)
+	}
+	if input.OaiLanguage != nil {
+		cfg.OaiLanguage = strings.TrimSpace(*input.OaiLanguage)
+	}
+	if input.SecChUA != nil {
+		cfg.SecChUA = strings.TrimSpace(*input.SecChUA)
+	}
+	if input.SecChUAMobile != nil {
+		cfg.SecChUAMobile = strings.TrimSpace(*input.SecChUAMobile)
+	}
+	if input.SecChUAPlatform != nil {
+		cfg.SecChUAPlatform = strings.TrimSpace(*input.SecChUAPlatform)
+	}
+	if input.SecFetchDest != nil {
+		cfg.SecFetchDest = strings.TrimSpace(*input.SecFetchDest)
+	}
+	if input.SecFetchMode != nil {
+		cfg.SecFetchMode = strings.TrimSpace(*input.SecFetchMode)
+	}
+	if input.SecFetchSite != nil {
+		cfg.SecFetchSite = strings.TrimSpace(*input.SecFetchSite)
+	}
+	if input.ChatGPTAccountID != nil {
+		cfg.ChatGPTAccountID = strings.TrimSpace(*input.ChatGPTAccountID)
+	}
+	if input.OAIClientVersion != nil {
+		cfg.OAIClientVersion = strings.TrimSpace(*input.OAIClientVersion)
+	}
+	if input.Priority != nil {
+		cfg.Priority = strings.TrimSpace(*input.Priority)
+	}
+	if input.LogPath != nil {
+		cfg.LogPath = strings.TrimSpace(*input.LogPath)
+	}
+	if input.AnytypeBaseURL != nil {
+		cfg.AnytypeBaseURL = strings.TrimSpace(*input.AnytypeBaseURL)
+	}
+	if input.AnytypeVersion != nil {
+		cfg.AnytypeVersion = strings.TrimSpace(*input.AnytypeVersion)
+	}
+	if input.AnytypeSpaceID != nil {
+		cfg.AnytypeSpaceID = strings.TrimSpace(*input.AnytypeSpaceID)
+	}
+	if input.AnytypeTypeKey != nil {
+		cfg.AnytypeTypeKey = strings.TrimSpace(*input.AnytypeTypeKey)
+	}
+	if input.AnytypeToken != nil {
+		cfg.AnytypeToken = strings.TrimSpace(*input.AnytypeToken)
+	}
+	if input.NotionBaseURL != nil {
+		cfg.NotionBaseURL = strings.TrimSpace(*input.NotionBaseURL)
+	}
+	if input.NotionVersion != nil {
+		cfg.NotionVersion = strings.TrimSpace(*input.NotionVersion)
+	}
+	if input.NotionToken != nil {
+		cfg.NotionToken = strings.TrimSpace(*input.NotionToken)
+	}
+	if input.NotionParentType != nil {
+		cfg.NotionParentType = sanitizeNotionParentType(*input.NotionParentType)
+	}
+	if input.NotionParentID != nil {
+		cfg.NotionParentID = strings.TrimSpace(*input.NotionParentID)
+	}
+	if input.NotionTitleProperty != nil {
+		cfg.NotionTitleProperty = strings.TrimSpace(*input.NotionTitleProperty)
+	}
+
+	s.location = resolveLocation(cfg.OutputTimezone)
+	payload := configToPayload(cfg)
+	s.configMu.Unlock()
+
+	s.invalidateConversationCache()
+	s.clearDetailCache()
+	s.resetExportClients()
+
+	return payload, nil
+}
+
+func normalizeExportTarget(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case exportTargetNotion:
+		return exportTargetNotion
+	default:
+		return exportTargetAnytype
+	}
+}
+
+func normalizeOrder(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "created":
+		return "created"
+	default:
+		return "updated"
+	}
+}
+
+func ensureBaseURL(value string) string {
+	trimmed := strings.TrimSpace(value)
+	if trimmed == "" {
+		return defaultBaseURL
+	}
+	return trimmed
+}
+
+func clampPageSize(value int) int {
+	if value <= 0 {
+		value = 20
+	}
+	if value > 100 {
+		value = 100
+	}
+	return value
+}
+
+func nonNegative(value int) int {
+	if value < 0 {
+		return 0
+	}
+	return value
+}
+
+func sanitizeNotionParentType(value string) string {
+	switch strings.ToLower(strings.TrimSpace(value)) {
+	case "page":
+		return "page"
+	case "database":
+		return "database"
+	default:
+		return ""
+	}
 }
 
 func (s *webServer) serveIndex(w http.ResponseWriter, r *http.Request) {
@@ -173,20 +511,18 @@ func (s *webServer) handleConversationList(w http.ResponseWriter, r *http.Reques
 	query := r.URL.Query()
 	force := query.Get("refresh") == "1"
 
+	cfg := s.configSnapshot()
+	loc := s.locationSnapshot()
+
 	offset, err := strconv.Atoi(query.Get("offset"))
 	if err != nil || offset < 0 {
 		offset = 0
 	}
 	limit, err := strconv.Atoi(query.Get("limit"))
 	if err != nil || limit <= 0 {
-		limit = s.cfg.PageSize
+		limit = cfg.PageSize
 	}
-	if limit <= 0 {
-		limit = 20
-	}
-	if limit > 100 {
-		limit = 100
-	}
+	limit = clampPageSize(limit)
 
 	page, err := s.getConversationPage(r.Context(), offset, limit, force)
 	if err != nil {
@@ -199,8 +535,8 @@ func (s *webServer) handleConversationList(w http.ResponseWriter, r *http.Reques
 		items = append(items, apiConversationItem{
 			ID:         meta.ID,
 			Title:      firstNonEmpty(meta.Title, "(未命名对话)"),
-			CreateTime: formatTimestamp(meta.CreateTime.Float64(), s.location),
-			UpdateTime: formatTimestamp(meta.UpdateTime.Float64(), s.location),
+			CreateTime: formatTimestamp(meta.CreateTime.Float64(), loc),
+			UpdateTime: formatTimestamp(meta.UpdateTime.Float64(), loc),
 		})
 	}
 	writeJSON(w, http.StatusOK, map[string]interface{}{
@@ -217,6 +553,7 @@ func (s *webServer) handleConversationDetail(w http.ResponseWriter, r *http.Requ
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	loc := s.locationSnapshot()
 	id := strings.TrimPrefix(r.URL.Path, "/api/conversations/")
 	id = strings.TrimSpace(id)
 	if id == "" || strings.Contains(id, "/") {
@@ -232,8 +569,8 @@ func (s *webServer) handleConversationDetail(w http.ResponseWriter, r *http.Requ
 	resp := apiConversationDetail{
 		ID:         conv.ID,
 		Title:      firstNonEmpty(conv.Title, "(未命名对话)"),
-		CreateTime: formatTimestamp(conv.CreateTime, s.location),
-		UpdateTime: formatTimestamp(conv.UpdateTime, s.location),
+		CreateTime: formatTimestamp(conv.CreateTime, loc),
+		UpdateTime: formatTimestamp(conv.UpdateTime, loc),
 	}
 	resp.Messages = make([]apiMessage, 0, len(conv.Messages))
 	for _, msg := range conv.Messages {
@@ -293,14 +630,12 @@ func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	cfg := s.configSnapshot()
 	target := strings.TrimSpace(req.Target)
 	if target == "" {
-		target = s.cfg.ExportTarget
+		target = cfg.ExportTarget
 	}
-	if target == "" {
-		target = defaultExportTarget
-	}
-	target = strings.ToLower(target)
+	target = normalizeExportTarget(target)
 
 	logInfo("Web 导入触发: 选中=%d 有效=%d 目标=%s", len(req.IDs), len(exports), target)
 
@@ -319,7 +654,7 @@ func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		created, syncErr = syncConversationsToAnytype(ctx, client, exports, s.cfg.OutputTimezone)
+		created, syncErr = syncConversationsToAnytype(ctx, client, exports, cfg.OutputTimezone)
 	case exportTargetNotion:
 		targetLabel = "Notion"
 		client, err := s.resolveNotionClient()
@@ -327,7 +662,7 @@ func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 			writeError(w, http.StatusBadRequest, err.Error())
 			return
 		}
-		created, pages, syncErr = syncConversationsToNotion(ctx, client, exports, s.cfg.OutputTimezone)
+		created, pages, syncErr = syncConversationsToNotion(ctx, client, exports, cfg.OutputTimezone)
 	default:
 		writeError(w, http.StatusBadRequest, fmt.Sprintf("不支持的导出目标: %s", target))
 		return
@@ -354,6 +689,12 @@ func (s *webServer) handleDelete(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	cfg := s.configSnapshot()
+	token := strings.TrimSpace(cfg.Token)
+	if token == "" {
+		writeError(w, http.StatusBadRequest, "缺少 OpenAI Token, 请先在配置页填写")
+		return
+	}
 	var req deleteRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "请求体解析失败: "+err.Error())
@@ -378,7 +719,7 @@ func (s *webServer) handleDelete(w http.ResponseWriter, r *http.Request) {
 		}
 		seen[id] = struct{}{}
 
-		if err := deleteConversation(ctx, s.httpClient, s.cfg, s.token, id); err != nil {
+		if err := deleteConversation(ctx, s.httpClient, cfg, token, id); err != nil {
 			writeError(w, http.StatusBadGateway, fmt.Sprintf("删除对话 %s 失败: %v", id, err))
 			return
 		}
@@ -413,7 +754,13 @@ func (s *webServer) getConversationPage(ctx context.Context, offset, limit int, 
 		s.cacheMu.RUnlock()
 	}
 
-	page, err := fetchConversationPage(ctx, s.httpClient, s.cfg, s.token, offset, limit)
+	cfg := s.configSnapshot()
+	token := strings.TrimSpace(cfg.Token)
+	if token == "" {
+		return nil, errors.New("缺少 OpenAI Token, 请先在配置页填写")
+	}
+
+	page, err := fetchConversationPage(ctx, s.httpClient, cfg, token, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -451,7 +798,13 @@ func (s *webServer) loadExportConversation(ctx context.Context, id string, force
 		s.detailMu.RUnlock()
 	}
 
-	detail, err := fetchConversationDetail(ctx, s.httpClient, s.cfg, s.token, id)
+	cfg := s.configSnapshot()
+	token := strings.TrimSpace(cfg.Token)
+	if token == "" {
+		return exportConversation{}, errors.New("缺少 OpenAI Token, 请先在配置页填写")
+	}
+
+	detail, err := fetchConversationDetail(ctx, s.httpClient, cfg, token, id)
 	if err != nil {
 		return exportConversation{}, err
 	}
@@ -518,23 +871,54 @@ func (s *webServer) removeDetailCache(id string) {
 	s.detailMu.Unlock()
 }
 
+func (s *webServer) clearDetailCache() {
+	s.detailMu.Lock()
+	s.detailCache = make(map[string]detailCacheEntry)
+	s.detailMu.Unlock()
+}
+
+func (s *webServer) resetExportClients() {
+	s.anyClientMu.Lock()
+	s.anyClient = nil
+	s.anyClientMu.Unlock()
+
+	s.notionClientMu.Lock()
+	s.notionClient = nil
+	s.notionClientMu.Unlock()
+}
+
+func (s *webServer) configSnapshot() *cliConfig {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	copy := *s.cfg
+	return &copy
+}
+
+func (s *webServer) locationSnapshot() *time.Location {
+	s.configMu.RLock()
+	defer s.configMu.RUnlock()
+	return s.location
+}
+
 func (s *webServer) formatMessageTimestamp(msg exportMessage) string {
+	loc := s.locationSnapshot()
 	if msg.CreateTime > 0 {
-		return formatTimestamp(msg.CreateTime, s.location)
+		return formatTimestamp(msg.CreateTime, loc)
 	}
 	if msg.UpdateTime > 0 {
-		return formatTimestamp(msg.UpdateTime, s.location)
+		return formatTimestamp(msg.UpdateTime, loc)
 	}
 	return "-"
 }
 
 func (s *webServer) resolveAnytypeClient() (*anytypeClient, error) {
+	cfg := s.configSnapshot()
 	s.anyClientMu.Lock()
 	defer s.anyClientMu.Unlock()
 	if s.anyClient != nil {
 		return s.anyClient, nil
 	}
-	client, err := newAnytypeClient(s.cfg, s.httpClient)
+	client, err := newAnytypeClient(cfg, s.httpClient)
 	if err != nil {
 		return nil, err
 	}
@@ -543,12 +927,13 @@ func (s *webServer) resolveAnytypeClient() (*anytypeClient, error) {
 }
 
 func (s *webServer) resolveNotionClient() (*notionClient, error) {
+	cfg := s.configSnapshot()
 	s.notionClientMu.Lock()
 	defer s.notionClientMu.Unlock()
 	if s.notionClient != nil {
 		return s.notionClient, nil
 	}
-	client, err := newNotionClient(s.cfg, s.httpClient)
+	client, err := newNotionClient(cfg, s.httpClient)
 	if err != nil {
 		return nil, err
 	}
