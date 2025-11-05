@@ -212,6 +212,40 @@ func (s *configStore) Unlock(ctx context.Context, password string) error {
 	return nil
 }
 
+func (s *configStore) VerifyPassword(ctx context.Context, password string) error {
+	if s == nil {
+		return errors.New("配置存储未初始化")
+	}
+	if !s.hasPassword {
+		return errPasswordNotSet
+	}
+	password = strings.TrimSpace(password)
+	if password == "" {
+		return errInvalidPassword
+	}
+
+	salt, err := s.loadMetadataValue(ctx, metaKeySalt)
+	if err != nil {
+		return err
+	}
+	if len(salt) == 0 {
+		return errors.New("配置存储缺少密码信息")
+	}
+	key, err := deriveKey(password, salt)
+	if err != nil {
+		return err
+	}
+	hash := sha256.Sum256(key)
+	existing, err := s.loadMetadataValue(ctx, metaKeyHash)
+	if err != nil {
+		return err
+	}
+	if !compareBytes(hash[:], existing) {
+		return errInvalidPassword
+	}
+	return nil
+}
+
 func (s *configStore) UpdatePassword(ctx context.Context, newPassword string) error {
 	if s == nil {
 		return errors.New("配置存储未初始化")

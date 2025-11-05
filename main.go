@@ -14,7 +14,10 @@ import (
 )
 
 func main() {
-	cfg := parseFlags()
+	cfg, err := parseFlags()
+	if err != nil {
+		exitWithError(err)
+	}
 	if err := runApp(cfg); err != nil {
 		exitWithError(err)
 	}
@@ -190,12 +193,14 @@ type cliConfig struct {
 	ExportTarget        string
 	ConfigDBPath        string
 	ConfigSecret        string
+	ConfigPath          string
 	ServeMode           bool
 	ServeAddr           string
 }
 
-func parseFlags() *cliConfig {
+func parseFlags() (*cliConfig, error) {
 	cfg := &cliConfig{}
+	defaultConfigPath := defaultConfigFilePath()
 	flag.StringVar(&cfg.Token, "token", "", "OpenAI Bearer Token (默认从环境变量 "+tokenEnvVar+" 读取)")
 	flag.StringVar(&cfg.BaseURL, "base-url", defaultBaseURL, "接口基础地址")
 	flag.StringVar(&cfg.OutputPath, "output", defaultOutputFile, "已废弃: 保留兼容性, 将忽略该参数")
@@ -236,9 +241,27 @@ func parseFlags() *cliConfig {
 	flag.StringVar(&cfg.NotionTitleProperty, "notion-title-property", "", "Notion 标题属性名称 (数据库默认 "+defaultNotionDatabaseTitleProp+")")
 	flag.StringVar(&cfg.ConfigDBPath, "config-db", defaultConfigDBPath, "配置持久化使用的 SQLite 文件路径")
 	flag.StringVar(&cfg.ConfigSecret, "config-secret", "", "配置加密密钥 (默认从环境变量 "+configSecretEnvVar+" 读取)")
+	flag.StringVar(&cfg.ConfigPath, "config", "", "配置文件路径或目录 (默认 "+defaultConfigPath+")")
 	flag.BoolVar(&cfg.ServeMode, "serve", false, "启动 Web 界面以浏览和导入对话")
 	flag.StringVar(&cfg.ServeAddr, "listen", "127.0.0.1:8080", "Web 界面监听地址")
 	flag.Parse()
+
+	usedFlags := make(map[string]struct{})
+	flag.CommandLine.Visit(func(f *flag.Flag) {
+		usedFlags[f.Name] = struct{}{}
+	})
+
+	resolvedConfigPath, err := resolveConfigFilePath(cfg.ConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("解析配置文件路径失败: %w", err)
+	}
+	cfg.ConfigPath = resolvedConfigPath
+
+	fileCfg, err := loadFileConfig(cfg.ConfigPath)
+	if err != nil {
+		return nil, fmt.Errorf("读取配置文件失败: %w", err)
+	}
+	applyFileConfig(cfg, fileCfg, usedFlags)
 
 	if cfg.UserAgent == "" {
 		cfg.UserAgent = strings.TrimSpace(os.Getenv(userAgentEnvVar))
@@ -360,7 +383,7 @@ func parseFlags() *cliConfig {
 		cfg.ConfigSecret = strings.TrimSpace(os.Getenv(configSecretEnvVar))
 	}
 	cfg.ConfigSecret = strings.TrimSpace(cfg.ConfigSecret)
-	return cfg
+	return cfg, nil
 }
 
 func exitWithError(err error) {

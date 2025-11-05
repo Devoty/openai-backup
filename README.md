@@ -23,3 +23,19 @@ export CHATGPT_BEARER_TOKEN="sk-..."
 服务会在 `config/app.db` 持久化配置（AES-GCM 加密），首次运行可在 Web 界面设置/修改密码，也可通过 `OPENAIBACKUP_CONFIG_SECRET` 自动预设。数据库文件可直接备份迁移。  
 
 更多 CLI 参数、目标平台配置及加密密钥说明请参考 `go run main.go --help` 与 `constants.go`。  
+
+## 配置文件
+
+- CLI 模式会优先加载配置文件（JSON），默认路径遵循系统约定：`macOS -> ~/Library/Application Support/openai-backup/config.json`、`Windows -> %APPDATA%\openai-backup\config.json`、`Linux -> ~/.config/openai-backup/config.json`。若目录不存在将被忽略。  
+- 可通过 `--config` 指定文件或目录，例如 `--config ~/my-config` 将自动查找 `~/my-config/config.json`。命令行参数始终优先生效，其次是配置文件，再回退到环境变量与内置默认值。  
+- 示例：
+
+```json
+{
+  "token": "sk-xxx",
+  "export_target": "notion",
+  "notion_parent_id": "xxxxxxxxxxxxxxxxxxxx",
+  "page_size": 50,
+  "include_archived": true
+}
+```

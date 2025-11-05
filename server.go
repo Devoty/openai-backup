@@ -267,7 +267,7 @@ func newWebServer(httpClient *http.Client, cfg *cliConfig, token string) (*webSe
 		}
 	}
 
-	if app.hasPassword && app.configUnlocked {
+	if app.configUnlocked {
 		if payload, err := store.LoadConfig(ctx); err == nil {
 			applyConfigPayload(app.cfg, payload)
 		} else if !errors.Is(err, errConfigNotFound) {
@@ -1057,6 +1057,21 @@ func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "请求体解析失败: "+err.Error())
 		return
 	}
+	if s.hasPassword {
+		password := strings.TrimSpace(req.Password)
+		if password == "" {
+			writeError(w, http.StatusBadRequest, "请提供配置密码以确认导出")
+			return
+		}
+		if err := s.store.VerifyPassword(r.Context(), password); err != nil {
+			if errors.Is(err, errInvalidPassword) {
+				writeError(w, http.StatusUnauthorized, "配置密码不正确")
+				return
+			}
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("验证密码失败: %v", err))
+			return
+		}
+	}
 	if len(req.IDs) == 0 {
 		writeError(w, http.StatusBadRequest, "请选择至少一条对话")
 		return
@@ -1429,6 +1444,8 @@ type apiConversationDetail struct {
 type importRequest struct {
 	IDs    []string `json:"ids"`
 	Target string   `json:"target"`
+	// Password 用于导出前的二次确认，只有设置了配置密码时才需要。
+	Password string `json:"password"`
 }
 
 type deleteRequest struct {
