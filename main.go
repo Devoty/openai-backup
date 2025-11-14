@@ -65,22 +65,7 @@ type cliConfig struct {
 	IncludeArchived     bool
 	Token               string
 	OutputTimezone      string
-	DeviceID            string
 	UserAgent           string
-	AcceptLanguage      string
-	Referer             string
-	Cookie              string
-	Origin              string
-	OaiLanguage         string
-	SecChUA             string
-	SecChUAMobile       string
-	SecChUAPlatform     string
-	SecFetchDest        string
-	SecFetchMode        string
-	SecFetchSite        string
-	ChatGPTAccountID    string
-	OAIClientVersion    string
-	Priority            string
 	LogPath             string
 	AnytypeBaseURL      string
 	AnytypeVersion      string
@@ -95,7 +80,6 @@ type cliConfig struct {
 	NotionTitleProperty string
 	ExportTarget        string
 	ConfigDBPath        string
-	ConfigSecret        string
 	ServeMode           bool
 	ServeAddr           string
 }
@@ -132,28 +116,11 @@ func loadPersistedConfig(cfg *cliConfig) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	store, err := newConfigStore(cfg.ConfigDBPath)
+	store, err := Init(cfg.ConfigDBPath)
 	if err != nil {
 		return fmt.Errorf("初始化配置存储失败: %w", err)
 	}
 	defer store.Close()
-
-	passwordInitialized := false
-
-	switch {
-	case store.HasPassword():
-		//	if secret == "" {
-		//		return fmt.Errorf("配置数据库已加密，请通过 --config-secret 或环境变量 %s 提供密码", configSecretEnvVar)
-		//	}
-		//	if err := store.Unlock(ctx, secret); err != nil {
-		//		return fmt.Errorf("配置存储解锁失败: %w", err)
-		//	}
-		//case secret != "":
-		//	if err := store.SetPassword(ctx, secret); err != nil {
-		//		return fmt.Errorf("初始化配置密码失败: %w", err)
-		//	}
-		passwordInitialized = true
-	}
 
 	hasConfig, err := store.HasConfigItems(ctx)
 	if err != nil {
@@ -176,16 +143,10 @@ func loadPersistedConfig(cfg *cliConfig) error {
 		return fmt.Errorf("读取配置失败: %w", err)
 	}
 	applyPersistedConfig(cfg, payload, usedFlags)
-
-	if passwordInitialized {
-		if err := store.SaveConfig(ctx, payload); err != nil {
-			return fmt.Errorf("配置重加密失败: %w", err)
-		}
-	}
 	return nil
 }
 
-func applyPersistedConfig(cfg *cliConfig, payload configPayload, usedFlags map[string]struct{}) {
+func applyPersistedConfig(cfg *cliConfig, payload ConfigPayload, usedFlags map[string]struct{}) {
 	if cfg == nil {
 		return
 	}
@@ -205,22 +166,7 @@ func applyPersistedConfig(cfg *cliConfig, payload configPayload, usedFlags map[s
 	applyPersistedInt(usedFlags, "offset", &cfg.InitialOffset, payload.InitialOffset)
 	applyPersistedBool(usedFlags, "include-archived", &cfg.IncludeArchived, payload.IncludeArchived)
 	applyPersistedString(usedFlags, "token", &cfg.Token, payload.Token)
-	applyPersistedString(usedFlags, "device-id", &cfg.DeviceID, payload.DeviceID)
 	applyPersistedString(usedFlags, "user-agent", &cfg.UserAgent, payload.UserAgent)
-	applyPersistedString(usedFlags, "accept-language", &cfg.AcceptLanguage, payload.AcceptLanguage)
-	applyPersistedString(usedFlags, "referer", &cfg.Referer, payload.Referer)
-	applyPersistedString(usedFlags, "cookie", &cfg.Cookie, payload.Cookie)
-	applyPersistedString(usedFlags, "origin", &cfg.Origin, payload.Origin)
-	applyPersistedString(usedFlags, "oai-language", &cfg.OaiLanguage, payload.OaiLanguage)
-	applyPersistedString(usedFlags, "sec-ch-ua", &cfg.SecChUA, payload.SecChUA)
-	applyPersistedString(usedFlags, "sec-ch-ua-mobile", &cfg.SecChUAMobile, payload.SecChUAMobile)
-	applyPersistedString(usedFlags, "sec-ch-ua-platform", &cfg.SecChUAPlatform, payload.SecChUAPlatform)
-	applyPersistedString(usedFlags, "sec-fetch-dest", &cfg.SecFetchDest, payload.SecFetchDest)
-	applyPersistedString(usedFlags, "sec-fetch-mode", &cfg.SecFetchMode, payload.SecFetchMode)
-	applyPersistedString(usedFlags, "sec-fetch-site", &cfg.SecFetchSite, payload.SecFetchSite)
-	applyPersistedString(usedFlags, "chatgpt-account-id", &cfg.ChatGPTAccountID, payload.ChatGPTAccountID)
-	applyPersistedString(usedFlags, "oai-client-version", &cfg.OAIClientVersion, payload.OAIClientVersion)
-	applyPersistedString(usedFlags, "priority", &cfg.Priority, payload.Priority)
 	applyPersistedString(usedFlags, "log-file", &cfg.LogPath, payload.LogPath)
 }
 

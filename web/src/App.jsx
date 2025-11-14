@@ -544,7 +544,6 @@ function ConfigForm({
         onSubmit,
         onReset,
         saving,
-        locked,
         activeSection,
         onSectionChange,
         onImport,
@@ -582,14 +581,14 @@ function ConfigForm({
                                                 type="button"
                                                 className="secondary"
                                                 onClick={() => onImport ? onImport() : null}
-                                                disabled={locked || importing || saving}
+                                                disabled={importing || saving}
                                         >
                                                 {importing ? "导入中…" : "导入基础数据"}
                                         </button>
                                         <button
                                                 type="button"
                                                 onClick={() => onExport ? onExport() : null}
-                                                disabled={locked || exporting}
+                                                disabled={exporting}
                                         >
                                                 {exporting ? "导出中…" : "导出基础数据"}
                                         </button>
@@ -602,8 +601,8 @@ function ConfigForm({
                                 <button type="button" className="secondary" onClick={onReset} disabled={saving}>
                                         重置修改
                                 </button>
-                                <button type="submit" disabled={saving || locked}>
-                                        {saving ? "保存中…" : locked ? "请先解锁" : "保存配置"}
+                                <button type="submit" disabled={saving}>
+                                        {saving ? "保存中…" : "保存配置"}
                                 </button>
                         </div>
                 </form>
@@ -617,8 +616,6 @@ function App() {
         const [configTab, setConfigTab] = useState("core");
         const [configDraft, setConfigDraft] = useState(() => createConfigDraft(initialConfig));
         const [configSaving, setConfigSaving] = useState(false);
-        const [configState, setConfigState] = useState({ hasPassword: false, unlocked: true });
-        const [stateVersion, setStateVersion] = useState(0);
         const [total, setTotal] = useState(0);
         const [offset, setOffset] = useState(0);
         const [limit, setLimit] = useState(() => clampPageSizeValue(initialConfig.page_size));
@@ -633,10 +630,6 @@ function App() {
         const [singleDeleteLoading, setSingleDeleteLoading] = useState(false);
         const [preview, setPreview] = useState(initialPreview);
         const [target, setTarget] = useState(initialConfig.target);
-	const [unlockPassword, setUnlockPassword] = useState("");
-	const [unlockLoading, setUnlockLoading] = useState(false);
-	const [passwordSaving, setPasswordSaving] = useState(false);
-	const [passwordInputs, setPasswordInputs] = useState({ password: "", oldPassword: "", newPassword: "" });
         const [configImporting, setConfigImporting] = useState(false);
         const [configExporting, setConfigExporting] = useState(false);
         const messageTimerRef = useRef(null);
@@ -644,7 +637,6 @@ function App() {
 
 	const selectedIds = useMemo(() => Array.from(selected), [selected]);
 	const selectedCount = selectedIds.length;
-	const isConfigLocked = configState.hasPassword && !configState.unlocked;
 
 	const showMessage = useCallback((text, isError) => {
 		if (messageTimerRef.current) {
@@ -669,10 +661,6 @@ function App() {
 		setOffset(0);
 	}, []);
 
-	const refreshConfigState = useCallback(() => {
-		setStateVersion((token) => token + 1);
-	}, []);
-
 	useEffect(() => {
 		return () => {
 			if (messageTimerRef.current) {
@@ -683,48 +671,29 @@ function App() {
 
 	useEffect(() => {
 		let cancelled = false;
-		async function loadStateAndConfig() {
+		async function loadConfig() {
 			try {
-				const response = await fetch("/api/config/state", {
+				const response = await fetch("/api/config", {
 					headers: { "Accept": "application/json" }
 				});
 				const data = await response.json().catch(() => ({}));
-				if (cancelled) {
-					return;
+				if (!response.ok) {
+					throw new Error(data.error || response.statusText || "加载配置失败");
 				}
-				const hasPassword = Boolean(data && data.has_password);
-				const unlocked = hasPassword ? Boolean(data.unlocked) : true;
-				setConfigState({ hasPassword, unlocked });
-				if (!unlocked) {
-					return;
-				}
-				try {
-					const cfgResponse = await fetch("/api/config", {
-						headers: { "Accept": "application/json" }
-					});
-					const cfgData = await cfgResponse.json().catch(() => ({}));
-					if (!cfgResponse.ok) {
-						throw new Error(cfgData.error || cfgResponse.statusText || "加载配置失败");
-					}
-					if (!cancelled) {
-						applyConfigPayloadToState(cfgData);
-					}
-				} catch (error) {
-					if (!cancelled) {
-						showMessage((error && error.message) || "加载配置失败", true);
-					}
+				if (!cancelled) {
+					applyConfigPayloadToState(data);
 				}
 			} catch (error) {
 				if (!cancelled) {
-					showMessage((error && error.message) || "加载配置状态失败", true);
+					showMessage((error && error.message) || "加载配置失败", true);
 				}
 			}
 		}
-		loadStateAndConfig();
+		loadConfig();
 		return () => {
 			cancelled = true;
 		};
-	}, [applyConfigPayloadToState, showMessage, stateVersion]);
+	}, [applyConfigPayloadToState, showMessage]);
 
 	useEffect(() => {
 		let cancelled = false;
@@ -827,10 +796,6 @@ function App() {
         }, [setConfigTab]);
 
         const handleConfigExport = useCallback(async () => {
-                if (isConfigLocked) {
-                        showMessage("请先解锁配置后再导出", true);
-                        return;
-                }
                 setConfigExporting(true);
                 try {
                         const response = await fetch("/api/config/export", {
@@ -888,27 +853,16 @@ function App() {
                 } finally {
                         setConfigExporting(false);
                 }
-        }, [isConfigLocked, showMessage]);
+        }, [showMessage]);
 
         const handleConfigImportClick = useCallback(() => {
-                if (isConfigLocked) {
-                        showMessage("请先解锁配置后再导入", true);
-                        return;
-                }
                 if (configImportInputRef.current) {
                         configImportInputRef.current.value = "";
                         configImportInputRef.current.click();
                 }
-        }, [isConfigLocked, showMessage, configImportInputRef]);
+        }, [showMessage, configImportInputRef]);
 
         const handleConfigImportFile = useCallback((event) => {
-                if (isConfigLocked) {
-                        showMessage("请先解锁配置后再导入", true);
-                        if (event && event.target) {
-                                event.target.value = "";
-                        }
-                        return;
-                }
                 const input = event && event.target;
                 const files = input && input.files;
                 if (!files || files.length === 0) {
@@ -965,14 +919,10 @@ function App() {
                         }
                 };
                 reader.readAsText(file);
-        }, [applyConfigPayloadToState, configImportInputRef, isConfigLocked, showMessage]);
+        }, [applyConfigPayloadToState, configImportInputRef, showMessage]);
 
         const handleConfigSubmit = useCallback(async (event) => {
                 event.preventDefault();
-		if (isConfigLocked) {
-			showMessage("请先解锁配置后再保存修改", true);
-			return;
-		}
                 setConfigSaving(true);
                 try {
                         const payload = prepareConfigPayload(configDraft);
@@ -1005,117 +955,7 @@ function App() {
                 } finally {
                         setConfigSaving(false);
                 }
-	}, [configDraft, isConfigLocked, showMessage]);
-
-	const handleUnlockSubmit = useCallback(async (event) => {
-		event.preventDefault();
-		if (!configState.hasPassword) {
-			showMessage("尚未设置密码", true);
-			return;
-		}
-		const password = (unlockPassword || "").trim();
-		if (!password) {
-			showMessage("请输入密码", true);
-			return;
-		}
-		setUnlockLoading(true);
-		try {
-			const response = await fetch("/api/config/unlock", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Accept": "application/json"
-				},
-				body: JSON.stringify({ password })
-			});
-			const data = await response.json().catch(() => ({}));
-			if (!response.ok) {
-				throw new Error(data.error || response.statusText || "解锁失败");
-			}
-			setUnlockPassword("");
-			setConfigState({ hasPassword: true, unlocked: true });
-			if (data && typeof data === "object" && data.listen !== undefined) {
-				applyConfigPayloadToState(data);
-			} else {
-				refreshConfigState();
-			}
-			showMessage("配置已解锁", false);
-		} catch (error) {
-			showMessage((error && error.message) || "解锁失败", true);
-		} finally {
-			setUnlockLoading(false);
-		}
-	}, [applyConfigPayloadToState, configState.hasPassword, refreshConfigState, showMessage, unlockPassword]);
-
-	const handlePasswordInputChange = useCallback((key, value) => {
-		setPasswordInputs((prev) => ({ ...prev, [key]: value }));
-	}, []);
-
-	const handleSetPassword = useCallback(async () => {
-		const password = (passwordInputs.password || "").trim();
-		if (password.length < 8) {
-			showMessage("密码长度至少 8 位", true);
-			return;
-		}
-		setPasswordSaving(true);
-		try {
-			const response = await fetch("/api/config/password", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Accept": "application/json"
-				},
-				body: JSON.stringify({ password })
-			});
-			const data = await response.json().catch(() => ({}));
-			if (!response.ok) {
-				throw new Error(data.error || response.statusText || "设置密码失败");
-			}
-			setConfigState({ hasPassword: true, unlocked: true });
-			setPasswordInputs({ password: "", oldPassword: "", newPassword: "" });
-			refreshConfigState();
-			showMessage("密码已设置", false);
-		} catch (error) {
-			showMessage((error && error.message) || "设置密码失败", true);
-		} finally {
-			setPasswordSaving(false);
-		}
-	}, [passwordInputs.password, refreshConfigState, showMessage]);
-
-	const handleChangePassword = useCallback(async () => {
-		const oldPassword = (passwordInputs.oldPassword || "").trim();
-		const newPassword = (passwordInputs.newPassword || "").trim();
-		if (!oldPassword || !newPassword) {
-			showMessage("请输入旧密码和新密码", true);
-			return;
-		}
-		if (newPassword.length < 8) {
-			showMessage("新密码长度至少 8 位", true);
-			return;
-		}
-		setPasswordSaving(true);
-		try {
-			const response = await fetch("/api/config/password", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-					"Accept": "application/json"
-				},
-				body: JSON.stringify({ old_password: oldPassword, new_password: newPassword })
-			});
-			const data = await response.json().catch(() => ({}));
-			if (!response.ok) {
-				throw new Error(data.error || response.statusText || "修改密码失败");
-			}
-			setPasswordInputs({ password: "", oldPassword: "", newPassword: "" });
-			refreshConfigState();
-			showMessage("密码已更新", false);
-		} catch (error) {
-			showMessage((error && error.message) || "修改密码失败", true);
-		} finally {
-			setPasswordSaving(false);
-		}
-	}, [passwordInputs.newPassword, passwordInputs.oldPassword, refreshConfigState, showMessage]);
+	}, [configDraft, showMessage]);
 
 	const handlePreview = useCallback(async (id) => {
 		if (!id) {
@@ -1151,10 +991,6 @@ function App() {
 	}, [showMessage]);
 
 	const handleImport = useCallback(async () => {
-		if (isConfigLocked) {
-			showMessage("请先解锁配置", true);
-			return;
-		}
 		if (selectedCount === 0) {
 			showMessage("请先在列表中勾选需要导入的对话", true);
 			return;
@@ -1196,7 +1032,7 @@ function App() {
                 } finally {
                         setImportLoading(false);
                 }
-	}, [isConfigLocked, selectedCount, selectedIds, target, showMessage]);
+	}, [selectedCount, selectedIds, target, showMessage]);
 
 	const adjustAfterDelete = useCallback((deletedIds, deletedCount, clearPreviewFlag) => {
 		const count = deletedCount >= 0 ? deletedCount : deletedIds.length;
@@ -1378,7 +1214,7 @@ function App() {
                                                         <button
                                                                 type="button"
                                                                 onClick={handleImport}
-                                                                disabled={isConfigLocked || selectedCount === 0 || importLoading}
+                                                                disabled={selectedCount === 0 || importLoading}
                                                         >
                                                                 {importLabel}
                                                         </button>
@@ -1394,26 +1230,8 @@ function App() {
                                                 <div className="target-hint">{targetHint}</div>
                                         </div>
 			) : (
-				<div className="settings-meta">
-					{configState.hasPassword
-						? "在此页面修改运行及导出所需的参数，保存后立即生效。"
-						: "首次使用前请设置配置密码，配置将以该密码加密存储。"}
-				</div>
+				<div className="settings-meta">在此页面修改运行及导出所需的参数，保存后立即生效。</div>
 			)}
-                                {configState.hasPassword && !configState.unlocked ? (
-                                        <form className="unlock-banner" onSubmit={handleUnlockSubmit}>
-                                                <input
-                                                        type="password"
-                                                        value={unlockPassword}
-                                                        onChange={(event) => setUnlockPassword(event.target.value)}
-                                                        placeholder="请输入配置密码以解锁"
-                                                        disabled={unlockLoading}
-                                                />
-                                                <button type="submit" disabled={unlockLoading}>
-                                                        {unlockLoading ? "解锁中…" : "解锁配置"}
-                                                </button>
-                                        </form>
-                                ) : null}
                                 <MessageBar message={message} />
                         </header>
 		{activeTab === "settings" ? (
@@ -1424,7 +1242,6 @@ function App() {
 						onSubmit={handleConfigSubmit}
 						onReset={handleConfigReset}
 						saving={configSaving}
-						locked={isConfigLocked}
                                                 activeSection={configTab}
                                                 onSectionChange={handleConfigSectionChange}
                                                 onImport={handleConfigImportClick}
@@ -1439,44 +1256,6 @@ function App() {
                                         style={{ display: "none" }}
                                         onChange={handleConfigImportFile}
                                 />
-				<section className="password-section">
-					<h2>配置密码</h2>
-                                                {configState.hasPassword ? (
-                                                        <div className="password-form">
-                                                                <input
-                                                                        type="password"
-                                                                        value={passwordInputs.oldPassword}
-                                                                        placeholder="当前密码"
-                                                                        onChange={(event) => handlePasswordInputChange("oldPassword", event.target.value)}
-                                                                        disabled={passwordSaving}
-                                                                />
-                                                                <input
-                                                                        type="password"
-                                                                        value={passwordInputs.newPassword}
-                                                                        placeholder="新密码（至少 8 位）"
-                                                                        onChange={(event) => handlePasswordInputChange("newPassword", event.target.value)}
-                                                                        disabled={passwordSaving}
-                                                                />
-                                                                <button type="button" onClick={handleChangePassword} disabled={passwordSaving}>
-                                                                        {passwordSaving ? "处理中…" : "修改密码"}
-                                                                </button>
-                                                        </div>
-                                                ) : (
-                                                        <div className="password-form">
-                                                                <input
-                                                                        type="password"
-                                                                        value={passwordInputs.password}
-                                                                        placeholder="设置新密码（至少 8 位）"
-                                                                        onChange={(event) => handlePasswordInputChange("password", event.target.value)}
-                                                                        disabled={passwordSaving}
-                                                                />
-                                                                <button type="button" onClick={handleSetPassword} disabled={passwordSaving}>
-                                                                        {passwordSaving ? "处理中…" : "设置密码"}
-                                                                </button>
-                                                                <div className="field-hint">配置将使用该密码加密存储，请妥善保管。</div>
-                                                        </div>
-                                                )}
-                                        </section>
                                 </div>
                         ) : (
                                 <main>

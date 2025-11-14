@@ -17,7 +17,7 @@
 | 编译 Go 后端 | `scripts/build-backend.sh` | 在 `bin/openai-backup` 生成可执行文件 |
 | 构建前端静态资源 | `scripts/build-frontend.sh` | 自动执行 `npm install` + `npm run build`，结果位于 `web/dist` |
 | 命令行导出 | `scripts/run-export.sh [参数...]` | 复用 `bin/openai-backup`，可带任意 CLI 参数 |
-| 启动 Web 服务 | `scripts/run-serve.sh [--listen 0.0.0.0:8080 ...]` | 启动内置 Web；密码可在界面设置，也可提前通过环境变量预设 |
+| 启动 Web 服务 | `scripts/run-serve.sh [--listen 0.0.0.0:8080 ...]` | 启动内置 Web，可在界面中维护配置并触发导入 |
 
 > 以上脚本默认在仓库根目录执行，必要时可结合环境变量（例如 `CHATGPT_BEARER_TOKEN`）使用。
 
@@ -61,11 +61,10 @@ export CHATGPT_BEARER_TOKEN="sk-..."
 
 ```bash
 export CHATGPT_BEARER_TOKEN="sk-..."
-# 可选：若希望启动时自动解锁，可额外提供 OPENAIBACKUP_CONFIG_SECRET
 ./bin/openai-backup --serve --listen 127.0.0.1:8080
 ```
 
-首次访问 http://127.0.0.1:8080/ 将显示前端界面，可在“设置”页补充请求头、目标平台信息，并设置配置密码；重新启动时使用相同密码即可解锁。
+首次访问 http://127.0.0.1:8080/ 将显示前端界面，可在“设置”页补充请求头、目标平台信息，保存后立即生效。
 
 ### 前端开发模式
 
@@ -80,9 +79,8 @@ Vite 默认监听 `http://localhost:5173`，如需调试与后端同源服务，
 ## 运行前检查
 
 1. **Token 环境变量**：确保 `CHATGPT_BEARER_TOKEN` 可用；Web 模式下在设置界面填写后同样有效。  
-2. **配置密码**：首次运行可在 Web 界面设置密码并自动加密 `config/app.db`；若希望自动解锁，可在启动前提供 `OPENAIBACKUP_CONFIG_SECRET` 或 `--config-secret`。  
-3. **ChatGPT 请求头**：若账号需要额外头部（`oai-device-id`、`User-Agent` 等），请在 CLI 参数或 Web 设置中补齐。  
-4. **目标平台凭证**：导出到 Anytype / Notion 前，提前准备 API Key 与空间/父级 ID。  
-5. **前端构建产物与配置备份**：`run-serve.sh` 仅依赖 Go `embed` 中的 `web/dist`，若更新前端记得重新执行 build。配置数据库位于 `config/app.db`，可直接备份或挂载。
+2. **ChatGPT 请求头**：若账号需要额外头部（`oai-device-id`、`User-Agent` 等），请在 CLI 参数或 Web 设置中补齐。  
+3. **目标平台凭证**：导出到 Anytype / Notion 前，提前准备 API Key 与空间/父级 ID。  
+4. **前端构建产物与配置备份**：`run-serve.sh` 仅依赖 Go `embed` 中的 `web/dist`，若更新前端记得重新执行 build。配置数据库位于 `config/app.db`，可直接备份或挂载。
 
 更多细节和模块关系请参考 `docs/ARCHITECTURE.md`。  

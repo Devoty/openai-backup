@@ -80,14 +80,14 @@ type notionErrorResponse struct {
 	Message string `json:"message"`
 }
 
-func newNotionClient(cfg *cliConfig, httpClient *http.Client) (*notionClient, error) {
+func newNotionClient(cfg *cliConfig) (*notionClient, error) {
 	token := strings.TrimSpace(cfg.NotionToken)
 	if token == "" {
-		return nil, fmt.Errorf("缺少 Notion API Key: 请提供 --notion-token 或设置环境变量 %s", notionTokenEnvVar)
+		return nil, fmt.Errorf("缺少 Notion API Key: 请提供 --notion-token")
 	}
 	parentID := strings.TrimSpace(cfg.NotionParentID)
 	if parentID == "" {
-		return nil, fmt.Errorf("缺少 Notion 父级 ID: 请提供 --notion-parent-id 或设置环境变量 %s", notionParentIDEnvVar)
+		return nil, fmt.Errorf("缺少 Notion 父级 ID: 请提供 --notion-parent-id")
 	}
 	parentType := strings.ToLower(strings.TrimSpace(cfg.NotionParentType))
 	if parentType == "" {
@@ -97,25 +97,12 @@ func newNotionClient(cfg *cliConfig, httpClient *http.Client) (*notionClient, er
 		return nil, fmt.Errorf("不支持的 Notion 父级类型: %s", parentType)
 	}
 	titleProperty := strings.TrimSpace(cfg.NotionTitleProperty)
-	if titleProperty == "" {
-		if parentType == "database" {
-			titleProperty = defaultNotionDatabaseTitleProp
-		} else {
-			titleProperty = defaultNotionPageTitleProp
-		}
-	}
+
 	baseURL := strings.TrimSpace(cfg.NotionBaseURL)
-	if baseURL == "" {
-		baseURL = defaultNotionBaseURL
-	}
 	baseURL = strings.TrimRight(baseURL, "/")
 	version := strings.TrimSpace(cfg.NotionVersion)
-	if version == "" {
-		version = defaultNotionVersion
-	}
 
 	return &notionClient{
-		httpClient:       httpClient,
 		baseURL:          baseURL,
 		version:          version,
 		token:            token,

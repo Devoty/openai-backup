@@ -95,7 +95,7 @@ func fetchConversationPage(ctx context.Context, cfg *cliConfig, token string, of
 	return &parsed, nil
 }
 
-func fetchConversationDetail(ctx context.Context, client *http.Client, cfg *cliConfig, token, conversationID string) (*conversationDetail, error) {
+func fetchConversationDetail(ctx context.Context, cfg *cliConfig, token, conversationID string) (*conversationDetail, error) {
 	// 请求单个对话的详细消息结构。
 	endpoint := fmt.Sprintf("%s/conversation/%s", strings.TrimSuffix(cfg.BaseURL, "/"), url.PathEscape(conversationID))
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint, nil)
@@ -105,7 +105,7 @@ func fetchConversationDetail(ctx context.Context, client *http.Client, cfg *cliC
 
 	applyCommonHeaders(req, cfg, token)
 
-	resp, err := client.Do(req)
+	resp, err := httpc.Client().Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -128,51 +128,6 @@ func applyCommonHeaders(req *http.Request, cfg *cliConfig, token string) {
 	req.Header.Set("Authorization", "Bearer "+token)
 	req.Header.Set("Accept", "*/*")
 	req.Header.Set("User-Agent", cfg.UserAgent)
-	if cfg.DeviceID != "" {
-		req.Header.Set("oai-device-id", cfg.DeviceID)
-	}
-	if cfg.OaiLanguage != "" {
-		req.Header.Set("oai-language", cfg.OaiLanguage)
-	}
-	if cfg.AcceptLanguage != "" {
-		req.Header.Set("Accept-Language", cfg.AcceptLanguage)
-	}
-	if cfg.Referer != "" {
-		req.Header.Set("Referer", cfg.Referer)
-	}
-	if cfg.Cookie != "" {
-		req.Header.Set("Cookie", cfg.Cookie)
-	}
-	if cfg.Origin != "" {
-		req.Header.Set("Origin", cfg.Origin)
-	}
-	if cfg.SecChUA != "" {
-		req.Header.Set("sec-ch-ua", cfg.SecChUA)
-	}
-	if cfg.SecChUAMobile != "" {
-		req.Header.Set("sec-ch-ua-mobile", cfg.SecChUAMobile)
-	}
-	if cfg.SecChUAPlatform != "" {
-		req.Header.Set("sec-ch-ua-platform", cfg.SecChUAPlatform)
-	}
-	if cfg.SecFetchDest != "" {
-		req.Header.Set("sec-fetch-dest", cfg.SecFetchDest)
-	}
-	if cfg.SecFetchMode != "" {
-		req.Header.Set("sec-fetch-mode", cfg.SecFetchMode)
-	}
-	if cfg.SecFetchSite != "" {
-		req.Header.Set("sec-fetch-site", cfg.SecFetchSite)
-	}
-	if cfg.ChatGPTAccountID != "" {
-		req.Header.Set("chatgpt-account-id", cfg.ChatGPTAccountID)
-	}
-	if cfg.OAIClientVersion != "" {
-		req.Header.Set("oai-client-version", cfg.OAIClientVersion)
-	}
-	if cfg.Priority != "" {
-		req.Header.Set("priority", cfg.Priority)
-	}
 }
 
 func deleteConversation(ctx context.Context, cfg *cliConfig, token, conversationID string) error {

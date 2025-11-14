@@ -43,9 +43,9 @@ openai-backup/
   - `deleteConversation` 封装删除接口。  
 - **`server.go`**：  
   - 维护配置、列表缓存与详情缓存（`conversationPageCacheEntry`、`detailCacheEntry`）。  
-  - 调度 `store.go` 完成配置加载/持久化，并暴露 `/api/config`、`/api/config/state`、`/api/config/unlock`、`/api/config/password`、`/api/conversations`、`/api/import`、`/api/conversations/delete` 等端点。  
+  - 调度 `store.go` 完成配置加载/持久化，并暴露 `/api/config`、`/api/config/export`、`/api/config/import`、`/api/conversations`、`/api/import`、`/api/conversations/delete` 等端点。  
   - 将前端 build 产物嵌入 `embed.FS`，无外部依赖即可运行。  
-- **`store.go`**：封装 SQLite + AES-GCM 存储逻辑，提供配置的加密读写接口。
+- **`store.go`**：封装 SQLite 持久化逻辑，提供配置的读写接口。
 - **`export.go`**：  
   - `buildExportConversation` 抽取 ChatGPT 消息树，过滤空节点，按时间排序。  
   - `renderConversationMarkdown`/`renderMessageContent` 负责 Markdown 化消息文本。  
@@ -61,16 +61,14 @@ openai-backup/
   - 拉取会话列表、预览详情。  
   - 选择目标（Anytype / Notion）并触发导入。  
   - 删除会话、刷新列表。  
-  - 提供解锁提示、密码设置/修改表单以及前端直连测试工具。  
+  - 提供导入/导出配置、前端直连测试等工具。  
   - 新增的“前端直连测试”直接向 ChatGPT `conversations` 接口发请求，验证鉴权配置。  
 - 构建后产物位于 `web/dist`，由 Go 服务通过 `embed` 提供。
 
 ## 配置与状态
 
 - `cliConfig` 同时作为 CLI 参数载体与 Web 配置结构。  
-- Web 模式通过 `store.go` 把配置写入 SQLite，数据使用 AES-GCM 加密：
-  - 首次运行可在前端界面设置密码；
-  - 若提供 `--config-secret`/`OPENAIBACKUP_CONFIG_SECRET`，则自动设置或解锁密码。  
+- Web 模式通过 `store.go` 把配置写入 SQLite（明文存储，方便排查与备份）。  
 - 会话缓存 TTL：列表 30 秒、详情 5 分钟，减少频繁访问官方接口；SQLite 文件可随时备份/恢复以同步配置状态。
 
 ## 数据流概览

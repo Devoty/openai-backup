@@ -35,24 +35,21 @@ type createAnytypeObjectRequest struct {
 	TypeKey string `json:"type_key"`
 }
 
-func newAnytypeClient(cfg *cliConfig, httpClient *http.Client) (*anytypeClient, error) {
+func newAnytypeClient(cfg *cliConfig) (*anytypeClient, error) {
 	if cfg.AnytypeToken == "" {
-		return nil, fmt.Errorf("缺少 Anytype API Key: 请提供 --anytype-token 或设置环境变量 %s", anytypeTokenEnvVar)
+		return nil, fmt.Errorf("缺少 Anytype API Key: 请提供 --anytype-token 或设置环境变量 %s")
 	}
 	if cfg.AnytypeSpaceID == "" {
-		return nil, fmt.Errorf("缺少 Anytype 空间 ID: 请提供 --anytype-space-id 或设置环境变量 %s", anytypeSpaceIDEnvVar)
+		return nil, fmt.Errorf("缺少 Anytype 空间 ID: 请提供 --anytype-space-id 或设置环境变量 %s")
 	}
 	base := strings.TrimRight(cfg.AnytypeBaseURL, "/")
-	if base == "" {
-		base = defaultAnytypeBaseURL
-	}
+
 	return &anytypeClient{
-		httpClient: httpClient,
-		baseURL:    base,
-		version:    cfg.AnytypeVersion,
-		spaceID:    cfg.AnytypeSpaceID,
-		typeKey:    cfg.AnytypeTypeKey,
-		token:      cfg.AnytypeToken,
+		baseURL: base,
+		version: cfg.AnytypeVersion,
+		spaceID: cfg.AnytypeSpaceID,
+		typeKey: cfg.AnytypeTypeKey,
+		token:   cfg.AnytypeToken,
 	}, nil
 }
 

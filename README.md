@@ -14,15 +14,14 @@
 # 2. 构建前端
 ./scripts/build-frontend.sh
 
-# 3. 设置 Token 后启动 Web（可选配置密码自动预设）
+# 3. 设置 Token 后启动 Web
 export CHATGPT_BEARER_TOKEN="sk-..."
-# 可选：若希望自动解锁配置，可提前设置 OPENAIBACKUP_CONFIG_SECRET
 ./scripts/run-serve.sh --listen 127.0.0.1:8080
 ```
 
-服务会在 `config/app.db` 持久化配置（AES-GCM 加密），首次运行可在 Web 界面设置/修改密码，也可通过 `OPENAIBACKUP_CONFIG_SECRET` 自动预设。数据库文件可直接备份迁移。  
+服务会在 `config/app.db` 持久化配置（SQLite），可直接备份或迁移。  
 
-更多 CLI 参数、目标平台配置及加密密钥说明请参考 `go run main.go --help` 与 `constants.go`。  
+更多 CLI 参数、目标平台配置说明请参考 `go run main.go --help` 与 `constants.go`。  
 
 ## 配置文件
 

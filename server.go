@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"embed"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -45,11 +44,9 @@ func cloneConversationPage(src *conversationListResponse) *conversationListRespo
 }
 
 type webServer struct {
-	cfg            *cliConfig
-	location       *time.Location
-	store          *configStore
-	hasPassword    bool
-	configUnlocked bool
+	cfg      *cliConfig
+	location *time.Location
+	store    *ConfigStore
 
 	configMu sync.RWMutex
 
@@ -66,7 +63,7 @@ type webServer struct {
 	notionClient   *notionClient
 }
 
-type configPayload struct {
+type ConfigPayload struct {
 	Listen              string `json:"listen"`
 	Timezone            string `json:"timezone"`
 	Target              string `json:"target"`
@@ -148,17 +145,6 @@ type configUpdate struct {
 	NotionTitleProperty *string `json:"notion_title_property"`
 }
 
-type configStateResponse struct {
-	HasPassword bool `json:"has_password"`
-	Unlocked    bool `json:"unlocked"`
-}
-
-type passwordRequest struct {
-	Password    string `json:"password"`
-	OldPassword string `json:"old_password"`
-	NewPassword string `json:"new_password"`
-}
-
 //go:embed web/dist/*
 var webStatic embed.FS
 
@@ -210,7 +196,7 @@ func runWebServer(ctx context.Context, cfg *cliConfig) error {
 
 func newWebServer(cfg *cliConfig) (*webServer, error) {
 	cfgCopy := *cfg
-	ctx := context.Background()
+	//ctx := context.Background()
 
 	cfgCopy.ExportTarget = normalizeExportTarget(cfgCopy.ExportTarget)
 	cfgCopy.Order = normalizeOrder(cfgCopy.Order)
@@ -225,48 +211,24 @@ func newWebServer(cfg *cliConfig) (*webServer, error) {
 	}
 	loc := resolveLocation(cfgCopy.OutputTimezone)
 
-	store, err := newConfigStore(cfgCopy.ConfigDBPath)
-	if err != nil {
-		return nil, err
-	}
+	//store, err := newConfigStore(cfgCopy.ConfigDBPath)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	app := &webServer{
-		cfg:            &cfgCopy,
-		location:       loc,
-		store:          store,
-		hasPassword:    store.HasPassword(),
-		configUnlocked: store.Unlocked(),
-		pageCache:      make(map[convPageKey]conversationPageCacheEntry),
-		detailCache:    make(map[string]detailCacheEntry),
+		cfg:      &cfgCopy,
+		location: loc,
+		//store:       store,
+		pageCache:   make(map[convPageKey]conversationPageCacheEntry),
+		detailCache: make(map[string]detailCacheEntry),
 	}
 
-	if app.hasPassword {
-		if secret := strings.TrimSpace(cfg.ConfigSecret); secret != "" {
-			if err := store.Unlock(ctx, secret); err == nil {
-				app.configUnlocked = true
-			} else {
-				logInfo("自动解锁配置失败: %v", err)
-			}
-		}
-	} else if secret := strings.TrimSpace(cfg.ConfigSecret); secret != "" {
-		if err := store.SetPassword(ctx, secret); err != nil {
-			logInfo("初始化配置密码失败: %v", err)
-		} else {
-			app.hasPassword = true
-			app.configUnlocked = true
-			if err := store.SaveConfig(ctx, configToPayload(app.cfg)); err != nil {
-				logInfo("初始化配置持久化失败: %v", err)
-			}
-		}
-	}
-
-	if app.configUnlocked {
-		if payload, err := store.LoadConfig(ctx); err == nil {
-			applyConfigPayload(app.cfg, payload)
-		} else if !errors.Is(err, errConfigNotFound) {
-			return nil, fmt.Errorf("加载持久化配置失败: %w", err)
-		}
-	}
+	//if payload, err := store.LoadConfig(ctx); err == nil {
+	//	applyConfigPayload(app.cfg, payload)
+	//} else if !errors.Is(err, errConfigNotFound) {
+	//	return nil, fmt.Errorf("加载持久化配置失败: %w", err)
+	//}
 
 	return app, nil
 }
@@ -276,9 +238,6 @@ func (s *webServer) routes() http.Handler {
 	staticServer := http.FileServer(http.FS(distFS))
 	mux.Handle("/assets/", staticServer)
 	mux.Handle("/favicon.ico", staticServer)
-	mux.HandleFunc("/api/config/state", s.handleConfigState)
-	mux.HandleFunc("/api/config/unlock", s.handleConfigUnlock)
-	mux.HandleFunc("/api/config/password", s.handleConfigPassword)
 	mux.HandleFunc("/api/config/export", s.handleConfigExport)
 	mux.HandleFunc("/api/config/import", s.handleConfigImport)
 	mux.HandleFunc("/api/config", s.handleConfig)
@@ -288,122 +247,6 @@ func (s *webServer) routes() http.Handler {
 	mux.HandleFunc("/api/import", s.handleImport)
 	mux.HandleFunc("/", s.serveIndex)
 	return mux
-}
-
-func (s *webServer) handleConfigState(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	state := configStateResponse{
-		HasPassword: s.hasPassword,
-		Unlocked:    s.configUnlocked,
-	}
-	writeJSON(w, http.StatusOK, state)
-}
-
-func (s *webServer) handleConfigUnlock(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	if !s.hasPassword {
-		writeError(w, http.StatusBadRequest, "尚未设置配置密码")
-		return
-	}
-	defer r.Body.Close()
-	var req passwordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("解析请求失败: %v", err))
-		return
-	}
-	password := strings.TrimSpace(req.Password)
-	if password == "" {
-		writeError(w, http.StatusBadRequest, "请输入密码")
-		return
-	}
-	if err := s.store.Unlock(r.Context(), password); err != nil {
-		if errors.Is(err, errInvalidPassword) {
-			writeError(w, http.StatusUnauthorized, "密码错误")
-			return
-		}
-		writeError(w, http.StatusInternalServerError, fmt.Sprintf("解锁失败: %v", err))
-		return
-	}
-	s.configUnlocked = true
-	payload, err := s.store.LoadConfig(r.Context())
-	if err != nil {
-		if errors.Is(err, errConfigNotFound) {
-			writeJSON(w, http.StatusOK, configStateResponse{HasPassword: s.hasPassword, Unlocked: s.configUnlocked})
-			return
-		}
-		writeError(w, http.StatusInternalServerError, fmt.Sprintf("加载配置失败: %v", err))
-		return
-	}
-	s.configMu.Lock()
-	applyConfigPayload(s.cfg, payload)
-	s.location = resolveLocation(s.cfg.OutputTimezone)
-	s.configMu.Unlock()
-	writeJSON(w, http.StatusOK, payload)
-}
-
-func (s *webServer) handleConfigPassword(w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
-	defer r.Body.Close()
-	var req passwordRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		writeError(w, http.StatusBadRequest, fmt.Sprintf("解析请求失败: %v", err))
-		return
-	}
-	ctx := r.Context()
-	if !s.hasPassword {
-		password := strings.TrimSpace(req.Password)
-		if password == "" {
-			writeError(w, http.StatusBadRequest, "密码不能为空")
-			return
-		}
-		if err := s.store.SetPassword(ctx, password); err != nil {
-			writeError(w, http.StatusBadRequest, err.Error())
-			return
-		}
-		s.hasPassword = true
-		s.configUnlocked = true
-		s.persistConfig(s.cfg)
-		writeJSON(w, http.StatusOK, configStateResponse{HasPassword: true, Unlocked: true})
-		return
-	}
-
-	oldPassword := strings.TrimSpace(req.OldPassword)
-	newPassword := strings.TrimSpace(req.NewPassword)
-	if oldPassword == "" || newPassword == "" {
-		writeError(w, http.StatusBadRequest, "请提供旧密码和新密码")
-		return
-	}
-	if !s.configUnlocked {
-		if err := s.store.Unlock(ctx, oldPassword); err != nil {
-			if errors.Is(err, errInvalidPassword) {
-				writeError(w, http.StatusUnauthorized, "旧密码不正确")
-				return
-			}
-			writeError(w, http.StatusInternalServerError, fmt.Sprintf("解锁失败: %v", err))
-			return
-		}
-		s.configUnlocked = true
-	}
-
-	payload := configToPayload(s.cfg)
-	if err := s.store.UpdatePassword(ctx, newPassword); err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	if err := s.store.SaveConfig(ctx, payload); err != nil {
-		writeError(w, http.StatusInternalServerError, fmt.Sprintf("更新配置失败: %v", err))
-		return
-	}
-	writeJSON(w, http.StatusOK, configStateResponse{HasPassword: true, Unlocked: true})
 }
 
 func (s *webServer) Close() error {
@@ -421,21 +264,9 @@ func (s *webServer) Close() error {
 func (s *webServer) handleConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		if s.hasPassword && !s.configUnlocked {
-			writeError(w, http.StatusForbidden, "配置已加密，请先输入密码")
-			return
-		}
 		payload := s.currentConfigPayload()
 		writeJSON(w, http.StatusOK, payload)
 	case http.MethodPost:
-		if !s.configUnlocked {
-			if s.hasPassword {
-				writeError(w, http.StatusForbidden, "配置已加密，请先解锁后再保存")
-			} else {
-				writeError(w, http.StatusForbidden, "请先设置配置密码，再保存修改")
-			}
-			return
-		}
 		defer r.Body.Close()
 		var input configUpdate
 		if err := json.NewDecoder(r.Body).Decode(&input); err != nil {
@@ -458,14 +289,6 @@ func (s *webServer) handleConfigExport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if !s.configUnlocked {
-		if s.hasPassword {
-			writeError(w, http.StatusForbidden, "配置已加密，请先解锁后再导出")
-		} else {
-			writeError(w, http.StatusForbidden, "请先设置配置密码，再导出配置")
-		}
-		return
-	}
 	filename := fmt.Sprintf("openai-backup-config-%s.json", time.Now().Format("20060102-150405"))
 	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
 	payload, err := s.prepareConfigExport()
@@ -481,41 +304,28 @@ func (s *webServer) handleConfigImport(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	if !s.configUnlocked {
-		if s.hasPassword {
-			writeError(w, http.StatusForbidden, "配置已加密，请先解锁后再导入")
-		} else {
-			writeError(w, http.StatusForbidden, "请先设置配置密码，再导入配置")
-		}
-		return
-	}
 	defer r.Body.Close()
-	var payload configPayload
+	var payload ConfigPayload
 	if err := json.NewDecoder(r.Body).Decode(&payload); err != nil {
 		writeError(w, http.StatusBadRequest, fmt.Sprintf("解析配置失败: %v", err))
 		return
 	}
-	decoded, err := s.decodeImportPayload(payload)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, err.Error())
-		return
-	}
-	normalized := normalizeConfigImportPayload(decoded)
+	normalized := normalizeConfigImportPayload(payload)
 	response := s.replaceConfig(normalized)
 	writeJSON(w, http.StatusOK, response)
 }
 
-func (s *webServer) currentConfigPayload() configPayload {
+func (s *webServer) currentConfigPayload() ConfigPayload {
 	s.configMu.RLock()
 	defer s.configMu.RUnlock()
 	return configToPayload(s.cfg)
 }
 
-func configToPayload(cfg *cliConfig) configPayload {
+func configToPayload(cfg *cliConfig) ConfigPayload {
 	if cfg == nil {
-		return configPayload{}
+		return ConfigPayload{}
 	}
-	payload := configPayload{
+	payload := ConfigPayload{
 		Listen:              strings.TrimSpace(cfg.ServeAddr),
 		Timezone:            strings.TrimSpace(cfg.OutputTimezone),
 		Target:              normalizeExportTarget(cfg.ExportTarget),
@@ -526,22 +336,7 @@ func configToPayload(cfg *cliConfig) configPayload {
 		InitialOffset:       nonNegative(cfg.InitialOffset),
 		IncludeArchived:     cfg.IncludeArchived,
 		Token:               strings.TrimSpace(cfg.Token),
-		DeviceID:            strings.TrimSpace(cfg.DeviceID),
 		UserAgent:           strings.TrimSpace(cfg.UserAgent),
-		AcceptLanguage:      strings.TrimSpace(cfg.AcceptLanguage),
-		Referer:             strings.TrimSpace(cfg.Referer),
-		Cookie:              strings.TrimSpace(cfg.Cookie),
-		Origin:              strings.TrimSpace(cfg.Origin),
-		OaiLanguage:         strings.TrimSpace(cfg.OaiLanguage),
-		SecChUA:             strings.TrimSpace(cfg.SecChUA),
-		SecChUAMobile:       strings.TrimSpace(cfg.SecChUAMobile),
-		SecChUAPlatform:     strings.TrimSpace(cfg.SecChUAPlatform),
-		SecFetchDest:        strings.TrimSpace(cfg.SecFetchDest),
-		SecFetchMode:        strings.TrimSpace(cfg.SecFetchMode),
-		SecFetchSite:        strings.TrimSpace(cfg.SecFetchSite),
-		ChatGPTAccountID:    strings.TrimSpace(cfg.ChatGPTAccountID),
-		OAIClientVersion:    strings.TrimSpace(cfg.OAIClientVersion),
-		Priority:            strings.TrimSpace(cfg.Priority),
 		LogPath:             strings.TrimSpace(cfg.LogPath),
 		AnytypeBaseURL:      strings.TrimSpace(cfg.AnytypeBaseURL),
 		AnytypeVersion:      strings.TrimSpace(cfg.AnytypeVersion),
@@ -561,7 +356,7 @@ func configToPayload(cfg *cliConfig) configPayload {
 	return payload
 }
 
-func applyConfigPayload(cfg *cliConfig, payload configPayload) {
+func applyConfigPayload(cfg *cliConfig, payload ConfigPayload) {
 	if cfg == nil {
 		return
 	}
@@ -581,22 +376,6 @@ func applyConfigPayload(cfg *cliConfig, payload configPayload) {
 	cfg.InitialOffset = payload.InitialOffset
 	cfg.IncludeArchived = payload.IncludeArchived
 	cfg.Token = strings.TrimSpace(payload.Token)
-	cfg.DeviceID = strings.TrimSpace(payload.DeviceID)
-	cfg.UserAgent = strings.TrimSpace(payload.UserAgent)
-	cfg.AcceptLanguage = strings.TrimSpace(payload.AcceptLanguage)
-	cfg.Referer = strings.TrimSpace(payload.Referer)
-	cfg.Cookie = strings.TrimSpace(payload.Cookie)
-	cfg.Origin = strings.TrimSpace(payload.Origin)
-	cfg.OaiLanguage = strings.TrimSpace(payload.OaiLanguage)
-	cfg.SecChUA = strings.TrimSpace(payload.SecChUA)
-	cfg.SecChUAMobile = strings.TrimSpace(payload.SecChUAMobile)
-	cfg.SecChUAPlatform = strings.TrimSpace(payload.SecChUAPlatform)
-	cfg.SecFetchDest = strings.TrimSpace(payload.SecFetchDest)
-	cfg.SecFetchMode = strings.TrimSpace(payload.SecFetchMode)
-	cfg.SecFetchSite = strings.TrimSpace(payload.SecFetchSite)
-	cfg.ChatGPTAccountID = strings.TrimSpace(payload.ChatGPTAccountID)
-	cfg.OAIClientVersion = strings.TrimSpace(payload.OAIClientVersion)
-	cfg.Priority = strings.TrimSpace(payload.Priority)
 	cfg.LogPath = strings.TrimSpace(payload.LogPath)
 	cfg.AnytypeBaseURL = strings.TrimSpace(payload.AnytypeBaseURL)
 	cfg.AnytypeVersion = strings.TrimSpace(payload.AnytypeVersion)
@@ -611,7 +390,7 @@ func applyConfigPayload(cfg *cliConfig, payload configPayload) {
 	cfg.NotionTitleProperty = strings.TrimSpace(payload.NotionTitleProperty)
 }
 
-func (s *webServer) updateConfig(input configUpdate) (configPayload, error) {
+func (s *webServer) updateConfig(input configUpdate) (ConfigPayload, error) {
 	s.configMu.Lock()
 	cfg := s.cfg
 
@@ -645,54 +424,7 @@ func (s *webServer) updateConfig(input configUpdate) (configPayload, error) {
 	if input.Token != nil {
 		cfg.Token = strings.TrimSpace(*input.Token)
 	}
-	if input.DeviceID != nil {
-		cfg.DeviceID = strings.TrimSpace(*input.DeviceID)
-	}
-	if input.UserAgent != nil {
-		cfg.UserAgent = strings.TrimSpace(*input.UserAgent)
-	}
-	if input.AcceptLanguage != nil {
-		cfg.AcceptLanguage = strings.TrimSpace(*input.AcceptLanguage)
-	}
-	if input.Referer != nil {
-		cfg.Referer = strings.TrimSpace(*input.Referer)
-	}
-	if input.Cookie != nil {
-		cfg.Cookie = strings.TrimSpace(*input.Cookie)
-	}
-	if input.Origin != nil {
-		cfg.Origin = strings.TrimSpace(*input.Origin)
-	}
-	if input.OaiLanguage != nil {
-		cfg.OaiLanguage = strings.TrimSpace(*input.OaiLanguage)
-	}
-	if input.SecChUA != nil {
-		cfg.SecChUA = strings.TrimSpace(*input.SecChUA)
-	}
-	if input.SecChUAMobile != nil {
-		cfg.SecChUAMobile = strings.TrimSpace(*input.SecChUAMobile)
-	}
-	if input.SecChUAPlatform != nil {
-		cfg.SecChUAPlatform = strings.TrimSpace(*input.SecChUAPlatform)
-	}
-	if input.SecFetchDest != nil {
-		cfg.SecFetchDest = strings.TrimSpace(*input.SecFetchDest)
-	}
-	if input.SecFetchMode != nil {
-		cfg.SecFetchMode = strings.TrimSpace(*input.SecFetchMode)
-	}
-	if input.SecFetchSite != nil {
-		cfg.SecFetchSite = strings.TrimSpace(*input.SecFetchSite)
-	}
-	if input.ChatGPTAccountID != nil {
-		cfg.ChatGPTAccountID = strings.TrimSpace(*input.ChatGPTAccountID)
-	}
-	if input.OAIClientVersion != nil {
-		cfg.OAIClientVersion = strings.TrimSpace(*input.OAIClientVersion)
-	}
-	if input.Priority != nil {
-		cfg.Priority = strings.TrimSpace(*input.Priority)
-	}
+
 	if input.LogPath != nil {
 		cfg.LogPath = strings.TrimSpace(*input.LogPath)
 	}
@@ -743,7 +475,7 @@ func (s *webServer) updateConfig(input configUpdate) (configPayload, error) {
 	return payload, nil
 }
 
-func (s *webServer) replaceConfig(payload configPayload) configPayload {
+func (s *webServer) replaceConfig(payload ConfigPayload) ConfigPayload {
 	s.configMu.Lock()
 	applyConfigPayload(s.cfg, payload)
 	s.location = resolveLocation(s.cfg.OutputTimezone)
@@ -766,11 +498,7 @@ func (s *webServer) persistConfig(cfg *cliConfig) {
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 	if err := s.store.SaveConfig(ctx, configToPayload(cfg)); err != nil {
-		if errors.Is(err, errStoreLocked) || errors.Is(err, errPasswordNotSet) {
-			logInfo("配置未持久化: %v", err)
-		} else {
-			logInfo("配置持久化失败: %v", err)
-		}
+		logInfo("配置持久化失败: %v", err)
 	}
 }
 
@@ -792,7 +520,7 @@ func normalizeOrder(value string) string {
 	}
 }
 
-func normalizeConfigImportPayload(payload configPayload) configPayload {
+func normalizeConfigImportPayload(payload ConfigPayload) ConfigPayload {
 	payload.Listen = strings.TrimSpace(payload.Listen)
 	payload.Timezone = strings.TrimSpace(payload.Timezone)
 	payload.Target = normalizeExportTarget(payload.Target)
@@ -841,76 +569,9 @@ func ensureBaseURL(value string) string {
 	return trimmed
 }
 
-const encryptedValuePrefix = "enc:"
-
-func (s *webServer) prepareConfigExport() (configPayload, error) {
+func (s *webServer) prepareConfigExport() (ConfigPayload, error) {
 	payload := s.currentConfigPayload()
-	if s.store == nil {
-		return payload, nil
-	}
-	var err error
-	if payload.Token, err = s.encryptConfigValue("token", payload.Token); err != nil {
-		return configPayload{}, err
-	}
-	if payload.Cookie, err = s.encryptConfigValue("cookie", payload.Cookie); err != nil {
-		return configPayload{}, err
-	}
-	if payload.AnytypeToken, err = s.encryptConfigValue("anytype_token", payload.AnytypeToken); err != nil {
-		return configPayload{}, err
-	}
-	if payload.NotionToken, err = s.encryptConfigValue("notion_token", payload.NotionToken); err != nil {
-		return configPayload{}, err
-	}
 	return payload, nil
-}
-
-func (s *webServer) decodeImportPayload(payload configPayload) (configPayload, error) {
-	var err error
-	if payload.Token, err = s.decryptConfigValue("token", payload.Token); err != nil {
-		return configPayload{}, err
-	}
-	if payload.Cookie, err = s.decryptConfigValue("cookie", payload.Cookie); err != nil {
-		return configPayload{}, err
-	}
-	if payload.AnytypeToken, err = s.decryptConfigValue("anytype_token", payload.AnytypeToken); err != nil {
-		return configPayload{}, err
-	}
-	if payload.NotionToken, err = s.decryptConfigValue("notion_token", payload.NotionToken); err != nil {
-		return configPayload{}, err
-	}
-	return payload, nil
-}
-
-func (s *webServer) encryptConfigValue(key, value string) (string, error) {
-	value = strings.TrimSpace(value)
-	if value == "" || s.store == nil || s.store.key == nil || !isSensitiveConfigKey(key) {
-		return value, nil
-	}
-	encrypted, err := s.store.encrypt([]byte(value))
-	if err != nil {
-		return "", fmt.Errorf("加密配置项 %s 失败: %w", key, err)
-	}
-	return encryptedValuePrefix + base64.StdEncoding.EncodeToString(encrypted), nil
-}
-
-func (s *webServer) decryptConfigValue(key, value string) (string, error) {
-	value = strings.TrimSpace(value)
-	if value == "" || s.store == nil || s.store.key == nil || !isSensitiveConfigKey(key) {
-		return value, nil
-	}
-	if !strings.HasPrefix(value, encryptedValuePrefix) {
-		return value, nil
-	}
-	raw := strings.TrimPrefix(value, encryptedValuePrefix)
-	data, err := base64.StdEncoding.DecodeString(raw)
-	if err != nil {
-		return "", fmt.Errorf("解码配置项 %s 失败: %w", key, err)
-	}
-	plain, err := s.store.decrypt(data)
-	if err != nil {
-		return "", fmt.Errorf("解密配置项 %s 失败: %w", key, err)
-	}
-	return string(plain), nil
 }
 
 func clampPageSize(value int) int {
@@ -1049,21 +710,6 @@ func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "请求体解析失败: "+err.Error())
 		return
-	}
-	if s.hasPassword {
-		password := strings.TrimSpace(req.Password)
-		if password == "" {
-			writeError(w, http.StatusBadRequest, "请提供配置密码以确认导出")
-			return
-		}
-		if err := s.store.VerifyPassword(r.Context(), password); err != nil {
-			if errors.Is(err, errInvalidPassword) {
-				writeError(w, http.StatusUnauthorized, "配置密码不正确")
-				return
-			}
-			writeError(w, http.StatusInternalServerError, fmt.Sprintf("验证密码失败: %v", err))
-			return
-		}
 	}
 	if len(req.IDs) == 0 {
 		writeError(w, http.StatusBadRequest, "请选择至少一条对话")
@@ -1232,7 +878,7 @@ func (s *webServer) getConversationPage(ctx context.Context, offset, limit int, 
 		return nil, errors.New("缺少 OpenAI Token, 请先在配置页填写")
 	}
 
-	page, err := fetchConversationPage(ctx, s.httpClient, cfg, token, offset, limit)
+	page, err := fetchConversationPage(ctx, cfg, token, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -1276,7 +922,7 @@ func (s *webServer) loadExportConversation(ctx context.Context, id string, force
 		return exportConversation{}, errors.New("缺少 OpenAI Token, 请先在配置页填写")
 	}
 
-	detail, err := fetchConversationDetail(ctx, s.httpClient, cfg, token, id)
+	detail, err := fetchConversationDetail(ctx, cfg, token, id)
 	if err != nil {
 		return exportConversation{}, err
 	}
@@ -1390,7 +1036,7 @@ func (s *webServer) resolveAnytypeClient() (*anytypeClient, error) {
 	if s.anyClient != nil {
 		return s.anyClient, nil
 	}
-	client, err := newAnytypeClient(cfg, s.httpClient)
+	client, err := newAnytypeClient(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1405,7 +1051,7 @@ func (s *webServer) resolveNotionClient() (*notionClient, error) {
 	if s.notionClient != nil {
 		return s.notionClient, nil
 	}
-	client, err := newNotionClient(cfg, s.httpClient)
+	client, err := newNotionClient(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -1437,8 +1083,6 @@ type apiConversationDetail struct {
 type importRequest struct {
 	IDs    []string `json:"ids"`
 	Target string   `json:"target"`
-	// Password 用于导出前的二次确认，只有设置了配置密码时才需要。
-	Password string `json:"password"`
 }
 
 type deleteRequest struct {
