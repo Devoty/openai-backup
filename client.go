@@ -9,17 +9,18 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"openai-backup/httpc"
 	"strings"
 )
 
-func fetchAllConversations(ctx context.Context, client *http.Client, cfg *cliConfig, token string) ([]conversationMeta, error) {
+func fetchAllConversations(ctx context.Context, cfg *cliConfig, token string) ([]conversationMeta, error) {
 	// 拉取分页对话列表并拼接完整集合。
 	var result []conversationMeta
 	offset := cfg.InitialOffset
 
 	for {
 		logInfo("请求对话列表 offset=%d limit=%d", offset, cfg.PageSize)
-		page, err := fetchConversationPage(ctx, client, cfg, token, offset, cfg.PageSize)
+		page, err := fetchConversationPage(ctx, cfg, token, offset, cfg.PageSize)
 		if err != nil {
 			return nil, err
 		}
@@ -49,7 +50,7 @@ func fetchAllConversations(ctx context.Context, client *http.Client, cfg *cliCon
 	return result, nil
 }
 
-func fetchConversationPage(ctx context.Context, client *http.Client, cfg *cliConfig, token string, offset, limit int) (*conversationListResponse, error) {
+func fetchConversationPage(ctx context.Context, cfg *cliConfig, token string, offset, limit int) (*conversationListResponse, error) {
 	// 构造列表接口请求。
 	endpoint, err := url.Parse(cfg.BaseURL + "/conversations")
 	if err != nil {
@@ -75,7 +76,7 @@ func fetchConversationPage(ctx context.Context, client *http.Client, cfg *cliCon
 
 	applyCommonHeaders(req, cfg, token)
 
-	resp, err := client.Do(req)
+	resp, err := httpc.Client().Do(req)
 	if err != nil {
 		return nil, err
 	}
@@ -174,7 +175,7 @@ func applyCommonHeaders(req *http.Request, cfg *cliConfig, token string) {
 	}
 }
 
-func deleteConversation(ctx context.Context, client *http.Client, cfg *cliConfig, token, conversationID string) error {
+func deleteConversation(ctx context.Context, cfg *cliConfig, token, conversationID string) error {
 	if strings.TrimSpace(conversationID) == "" {
 		return errors.New("缺少对话 ID")
 	}
@@ -195,7 +196,7 @@ func deleteConversation(ctx context.Context, client *http.Client, cfg *cliConfig
 	applyCommonHeaders(req, cfg, token)
 	req.Header.Set("Content-Type", "application/json")
 
-	resp, err := client.Do(req)
+	resp, err := httpc.Client().Do(req)
 	if err != nil {
 		return err
 	}

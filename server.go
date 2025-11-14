@@ -46,7 +46,6 @@ func cloneConversationPage(src *conversationListResponse) *conversationListRespo
 
 type webServer struct {
 	cfg            *cliConfig
-	httpClient     *http.Client
 	location       *time.Location
 	store          *configStore
 	hasPassword    bool
@@ -173,8 +172,8 @@ func init() {
 	}
 }
 
-func runWebServer(ctx context.Context, httpClient *http.Client, cfg *cliConfig, token string) error {
-	app, err := newWebServer(httpClient, cfg, token)
+func runWebServer(ctx context.Context, cfg *cliConfig) error {
+	app, err := newWebServer(cfg)
 	if err != nil {
 		return err
 	}
@@ -209,15 +208,10 @@ func runWebServer(ctx context.Context, httpClient *http.Client, cfg *cliConfig, 
 	}
 }
 
-func newWebServer(httpClient *http.Client, cfg *cliConfig, token string) (*webServer, error) {
+func newWebServer(cfg *cliConfig) (*webServer, error) {
 	cfgCopy := *cfg
-	cfgCopy.Token = strings.TrimSpace(token)
 	ctx := context.Background()
 
-	cfgCopy.Token = strings.TrimSpace(cfgCopy.Token)
-	if cfgCopy.Token == "" {
-		cfgCopy.Token = strings.TrimSpace(token)
-	}
 	cfgCopy.ExportTarget = normalizeExportTarget(cfgCopy.ExportTarget)
 	cfgCopy.Order = normalizeOrder(cfgCopy.Order)
 	cfgCopy.BaseURL = ensureBaseURL(cfgCopy.BaseURL)
@@ -238,7 +232,6 @@ func newWebServer(httpClient *http.Client, cfg *cliConfig, token string) (*webSe
 
 	app := &webServer{
 		cfg:            &cfgCopy,
-		httpClient:     httpClient,
 		location:       loc,
 		store:          store,
 		hasPassword:    store.HasPassword(),
@@ -1198,7 +1191,7 @@ func (s *webServer) handleDelete(w http.ResponseWriter, r *http.Request) {
 		}
 		seen[id] = struct{}{}
 
-		if err := deleteConversation(ctx, s.httpClient, cfg, token, id); err != nil {
+		if err := deleteConversation(ctx, cfg, token, id); err != nil {
 			writeError(w, http.StatusBadGateway, fmt.Sprintf("删除对话 %s 失败: %v", id, err))
 			return
 		}

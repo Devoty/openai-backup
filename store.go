@@ -176,6 +176,18 @@ func (s *configStore) SetPassword(ctx context.Context, password string) error {
 	return nil
 }
 
+// HasConfigItems reports whether at least one config entry exists.
+func (s *configStore) HasConfigItems(ctx context.Context) (bool, error) {
+	if s == nil || s.db == nil {
+		return false, errors.New("配置存储未初始化")
+	}
+	var count int
+	if err := s.db.QueryRowContext(ctx, `SELECT COUNT(*) FROM config_items`).Scan(&count); err != nil {
+		return false, fmt.Errorf("统计配置项失败: %w", err)
+	}
+	return count > 0, nil
+}
+
 func (s *configStore) Unlock(ctx context.Context, password string) error {
 	if s == nil {
 		return errors.New("配置存储未初始化")
@@ -287,14 +299,12 @@ func (s *configStore) UpdatePassword(ctx context.Context, newPassword string) er
 	return nil
 }
 
+// SaveConfig writes the normalized payload into SQLite, encrypting sensitive fields when possible.
 func (s *configStore) SaveConfig(ctx context.Context, payload configPayload) error {
 	if s == nil {
 		return errors.New("配置存储未初始化")
 	}
-	if !s.hasPassword {
-		return errPasswordNotSet
-	}
-	if !s.unlocked || s.key == nil {
+	if s.hasPassword && (!s.unlocked || s.key == nil) {
 		return errStoreLocked
 	}
 	if err := s.persistConfigItems(ctx, payload); err != nil {
@@ -315,7 +325,7 @@ func (s *configStore) persistConfigItems(ctx context.Context, payload configPayl
 		keys = append(keys, key)
 		valueBytes := []byte(item.value)
 		encryptedFlag := int64(0)
-		if item.encrypted && item.value != "" {
+		if item.encrypted && item.value != "" && s.canEncrypt() {
 			encrypted, encErr := s.encrypt(valueBytes)
 			if encErr != nil {
 				tx.Rollback()
@@ -431,19 +441,24 @@ func (s *configStore) migrateLegacyConfig(ctx context.Context) error {
 	return nil
 }
 
+// LoadConfig normalizes and returns the stored payload; it requires an unlocked store when encryption is enabled.
 func (s *configStore) LoadConfig(ctx context.Context) (configPayload, error) {
 	var payload configPayload
 	if s == nil {
 		return payload, errConfigNotFound
 	}
-	if !s.hasPassword {
-		return payload, errPasswordNotSet
-	}
-	if !s.unlocked || s.key == nil {
+	if s.hasPassword && (!s.unlocked || s.key == nil) {
 		return payload, errStoreLocked
 	}
 	if err := s.migrateLegacyConfig(ctx); err != nil {
 		return payload, err
+	}
+	hasConfig, err := s.HasConfigItems(ctx)
+	if err != nil {
+		return payload, err
+	}
+	if !hasConfig {
+		return payload, errConfigNotFound
 	}
 	return s.loadConfigItems(ctx)
 }
@@ -523,6 +538,10 @@ func compareBytes(a, b []byte) bool {
 		result |= a[i] ^ b[i]
 	}
 	return result == 0
+}
+
+func (s *configStore) canEncrypt() bool {
+	return s != nil && s.hasPassword && s.unlocked && s.key != nil
 }
 
 type configItem struct {

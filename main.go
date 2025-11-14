@@ -5,7 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"net/http"
+	"io"
 	"os"
 	"os/signal"
 	"strings"
@@ -14,142 +14,45 @@ import (
 )
 
 func main() {
+	// 解析命令行参数
 	cfg, err := parseFlags()
 	if err != nil {
 		exitWithError(err)
 	}
+
+	// 加载持久化配置并合并
+	if err := loadPersistedConfig(cfg); err != nil {
+		exitWithError(err)
+	}
+
+	// 启动应用主逻辑
 	if err := runApp(cfg); err != nil {
 		exitWithError(err)
 	}
 }
 
 func runApp(cfg *cliConfig) error {
-	target := normalizeTarget(cfg.ExportTarget)
-	token := resolveToken(cfg.Token)
-
 	logCloser, err := setupLogger(cfg.LogPath)
 	if err != nil {
 		return fmt.Errorf("初始化日志失败: %w", err)
 	}
-	defer logCloser.Close()
+	defer func(logCloser io.Closer) {
+		err := logCloser.Close()
+		if err != nil {
 
-	client := &http.Client{
-		Timeout: 60 * time.Second,
-	}
+		}
+	}(logCloser)
+
+	//创建一个 context，当程序收到指定信号（如 Ctrl+C 或 SIGTERM）时自动取消。用于优雅退出。
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
-	if cfg.ServeMode {
-		serveTarget := target
-		if serveTarget == "" {
-			serveTarget = defaultExportTarget
-		}
-		logInfo("启动 Web 界面, 输出时区=%s, 监听地址=%s, 默认导出目标=%s", cfg.OutputTimezone, cfg.ServeAddr, serveTarget)
-		if err := runWebServer(ctx, client, cfg, token); err != nil {
-			return fmt.Errorf("启动 Web 界面失败: %w", err)
-		}
-		return nil
+	logInfo("启动 Web 界面, 输出时区=%s, 监听地址=%s", cfg.OutputTimezone, cfg.ServeAddr)
+	if err := runWebServer(ctx, cfg); err != nil {
+		return fmt.Errorf("启动 Web 界面失败: %w", err)
 	}
+	return nil
 
-	if target == "" {
-		target = defaultExportTarget
-	}
-
-	if token == "" {
-		return errors.New("missing bearer token: provide --token or set " + tokenEnvVar)
-	}
-
-	logInfo("启动导出流程, 输出时区=%s, 目标=%s", cfg.OutputTimezone, target)
-	exports, err := collectConversationsForExport(ctx, client, cfg, token)
-	if err != nil {
-		return err
-	}
-	if len(exports) == 0 {
-		return errors.New("没有可导出的对话内容")
-	}
-
-	return exportConversations(ctx, client, cfg, target, exports)
-}
-
-func normalizeTarget(target string) string {
-	target = strings.TrimSpace(target)
-	if target == "" {
-		return ""
-	}
-	return strings.ToLower(target)
-}
-
-func resolveToken(token string) string {
-	token = strings.TrimSpace(token)
-	if token != "" {
-		return token
-	}
-	return strings.TrimSpace(os.Getenv(tokenEnvVar))
-}
-
-func collectConversationsForExport(ctx context.Context, client *http.Client, cfg *cliConfig, token string) ([]exportConversation, error) {
-	conversations, err := fetchAllConversations(ctx, client, cfg, token)
-	if err != nil {
-		return nil, fmt.Errorf("获取对话列表失败: %w", err)
-	}
-	logInfo("对话列表获取完成, 数量=%d", len(conversations))
-
-	exports := make([]exportConversation, 0, len(conversations))
-	for _, meta := range conversations {
-		logInfo("拉取对话详情: id=%s title=%s", meta.ID, meta.Title)
-		detail, err := fetchConversationDetail(ctx, client, cfg, token, meta.ID)
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "警告: 获取对话详情失败, ID=%s, 原因=%v\n", meta.ID, err)
-			logInfo("对话详情获取失败: id=%s err=%v", meta.ID, err)
-			continue
-		}
-		export := buildExportConversation(meta, detail)
-		if len(export.Messages) == 0 {
-			logInfo("对话无有效消息, 跳过 id=%s", meta.ID)
-			continue
-		}
-		exports = append(exports, export)
-	}
-
-	return exports, nil
-}
-
-func exportConversations(ctx context.Context, client *http.Client, cfg *cliConfig, target string, exports []exportConversation) error {
-	switch target {
-	case exportTargetAnytype:
-		anyClient, err := newAnytypeClient(cfg, client)
-		if err != nil {
-			return err
-		}
-
-		created, err := syncConversationsToAnytype(ctx, anyClient, exports, cfg.OutputTimezone)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("已导出 %d 个对话到 Anytype 空间 %s\n", created, cfg.AnytypeSpaceID)
-		logInfo("导出完成, 对话数=%d, 目标=Anytype, Space=%s", created, cfg.AnytypeSpaceID)
-		return nil
-	case exportTargetNotion:
-		notionClient, err := newNotionClient(cfg, client)
-		if err != nil {
-			return err
-		}
-
-		created, pageIDs, err := syncConversationsToNotion(ctx, notionClient, exports, cfg.OutputTimezone)
-		if err != nil {
-			return err
-		}
-
-		fmt.Printf("已导出 %d 个对话到 Notion %s %s\n", created, firstNonEmpty(cfg.NotionParentType, "parent"), cfg.NotionParentID)
-		if len(pageIDs) > 0 {
-			logInfo("Notion 页面创建列表: %v", pageIDs)
-		}
-		logInfo("导出完成, 对话数=%d, 目标=Notion, ParentType=%s, ParentID=%s", created, cfg.NotionParentType, cfg.NotionParentID)
-		return nil
-	default:
-		return fmt.Errorf("不支持的导出目标: %s", target)
-	}
 }
 
 type cliConfig struct {
@@ -193,196 +96,21 @@ type cliConfig struct {
 	ExportTarget        string
 	ConfigDBPath        string
 	ConfigSecret        string
-	ConfigPath          string
 	ServeMode           bool
 	ServeAddr           string
 }
 
 func parseFlags() (*cliConfig, error) {
 	cfg := &cliConfig{}
-	defaultConfigPath := defaultConfigFilePath()
-	flag.StringVar(&cfg.Token, "token", "", "OpenAI Bearer Token (默认从环境变量 "+tokenEnvVar+" 读取)")
-	flag.StringVar(&cfg.BaseURL, "base-url", defaultBaseURL, "接口基础地址")
-	flag.StringVar(&cfg.OutputPath, "output", defaultOutputFile, "已废弃: 保留兼容性, 将忽略该参数")
-	flag.StringVar(&cfg.Order, "order", "updated", "排序字段 (updated 或 created)")
-	flag.IntVar(&cfg.PageSize, "page-size", 20, "每次请求的对话数量")
-	flag.IntVar(&cfg.MaxConversations, "max", 0, "最多导出的对话数量 (0 表示全部)")
-	flag.IntVar(&cfg.InitialOffset, "offset", 0, "从指定 offset 开始读取")
-	flag.BoolVar(&cfg.IncludeArchived, "include-archived", false, "是否包含已归档对话")
-	flag.StringVar(&cfg.OutputTimezone, "timezone", "Local", "输出内容中的时间时区 (Local 或 UTC)")
-	flag.StringVar(&cfg.ExportTarget, "target", defaultExportTarget, "导出目标 (anytype 或 notion)")
-	flag.StringVar(&cfg.DeviceID, "device-id", "", "oai-device-id 请求头 (默认从环境变量 "+deviceIDEnvVar+" 读取)")
-	flag.StringVar(&cfg.UserAgent, "user-agent", "", "自定义 User-Agent (默认从环境变量 "+userAgentEnvVar+" 读取, 再回退内置值)")
-	flag.StringVar(&cfg.AcceptLanguage, "accept-language", "", "Accept-Language 请求头 (默认从环境变量 "+acceptLangEnvVar+" 读取)")
-	flag.StringVar(&cfg.Referer, "referer", "", "Referer 请求头 (默认从环境变量 "+refererEnvVar+" 读取)")
-	flag.StringVar(&cfg.Cookie, "cookie", "", "Cookie 请求头 (默认从环境变量 "+cookieEnvVar+" 读取)")
-	flag.StringVar(&cfg.Origin, "origin", "", "Origin 请求头 (默认从环境变量 "+originEnvVar+" 读取)")
-	flag.StringVar(&cfg.OaiLanguage, "oai-language", "", "oai-language 请求头 (默认从环境变量 "+oaiLanguageEnvVar+" 读取)")
-	flag.StringVar(&cfg.SecChUA, "sec-ch-ua", "", "sec-ch-ua 请求头 (默认从环境变量 "+secChUAEnvVar+" 读取)")
-	flag.StringVar(&cfg.SecChUAMobile, "sec-ch-ua-mobile", "", "sec-ch-ua-mobile 请求头 (默认从环境变量 "+secChUAMobileEnv+" 读取)")
-	flag.StringVar(&cfg.SecChUAPlatform, "sec-ch-ua-platform", "", "sec-ch-ua-platform 请求头 (默认从环境变量 "+secChUAPlatformEnv+" 读取)")
-	flag.StringVar(&cfg.SecFetchDest, "sec-fetch-dest", "", "sec-fetch-dest 请求头 (默认从环境变量 "+secFetchDestEnv+" 读取)")
-	flag.StringVar(&cfg.SecFetchMode, "sec-fetch-mode", "", "sec-fetch-mode 请求头 (默认从环境变量 "+secFetchModeEnv+" 读取)")
-	flag.StringVar(&cfg.SecFetchSite, "sec-fetch-site", "", "sec-fetch-site 请求头 (默认从环境变量 "+secFetchSiteEnv+" 读取)")
-	flag.StringVar(&cfg.ChatGPTAccountID, "chatgpt-account-id", "", "chatgpt-account-id 请求头 (默认从环境变量 "+accountIDEnvVar+" 读取)")
-	flag.StringVar(&cfg.OAIClientVersion, "oai-client-version", "", "oai-client-version 请求头 (默认从环境变量 "+clientVersionEnvVar+" 读取)")
-	flag.StringVar(&cfg.Priority, "priority", "", "priority 请求头 (默认从环境变量 "+priorityEnvVar+" 读取)")
-	flag.StringVar(&cfg.LogPath, "log-file", "chatgpt_export.log", "日志输出文件路径")
-	flag.StringVar(&cfg.AnytypeToken, "anytype-token", "", "Anytype API Key (默认从环境变量 "+anytypeTokenEnvVar+" 读取)")
-	flag.StringVar(&cfg.AnytypeBaseURL, "anytype-base-url", "", "Anytype API 基础地址 (默认 "+defaultAnytypeBaseURL+")")
-	flag.StringVar(&cfg.AnytypeVersion, "anytype-version", "", "Anytype API 版本 (默认 "+defaultAnytypeVersion+")")
-	flag.StringVar(&cfg.AnytypeSpaceID, "anytype-space-id", "", "Anytype 目标空间 ID (默认从环境变量 "+anytypeSpaceIDEnvVar+" 读取)")
-	flag.StringVar(&cfg.AnytypeTypeKey, "anytype-type-key", "", "Anytype 对象类型 key (默认 "+defaultAnytypeTypeKey+")")
-	flag.StringVar(&cfg.NotionToken, "notion-token", "", "Notion API Key (默认从环境变量 "+notionTokenEnvVar+" 读取)")
-	flag.StringVar(&cfg.NotionBaseURL, "notion-base-url", "", "Notion API 基础地址 (默认 "+defaultNotionBaseURL+")")
-	flag.StringVar(&cfg.NotionVersion, "notion-version", "", "Notion API 版本 (默认 "+defaultNotionVersion+")")
-	flag.StringVar(&cfg.NotionParentType, "notion-parent-type", "", "Notion 父级类型 (page 或 database)")
-	flag.StringVar(&cfg.NotionParentID, "notion-parent-id", "", "Notion 父级页面/数据库 ID (默认从环境变量 "+notionParentIDEnvVar+" 读取)")
-	flag.StringVar(&cfg.NotionTitleProperty, "notion-title-property", "", "Notion 标题属性名称 (数据库默认 "+defaultNotionDatabaseTitleProp+")")
 	flag.StringVar(&cfg.ConfigDBPath, "config-db", defaultConfigDBPath, "配置持久化使用的 SQLite 文件路径")
-	flag.StringVar(&cfg.ConfigSecret, "config-secret", "", "配置加密密钥 (默认从环境变量 "+configSecretEnvVar+" 读取)")
-	flag.StringVar(&cfg.ConfigPath, "config", "", "配置文件路径或目录 (默认 "+defaultConfigPath+")")
-	flag.BoolVar(&cfg.ServeMode, "serve", false, "启动 Web 界面以浏览和导入对话")
 	flag.StringVar(&cfg.ServeAddr, "listen", "127.0.0.1:8080", "Web 界面监听地址")
 	flag.Parse()
 
-	usedFlags := make(map[string]struct{})
-	flag.CommandLine.Visit(func(f *flag.Flag) {
-		usedFlags[f.Name] = struct{}{}
-	})
-
-	resolvedConfigPath, err := resolveConfigFilePath(cfg.ConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("解析配置文件路径失败: %w", err)
-	}
-	cfg.ConfigPath = resolvedConfigPath
-
-	fileCfg, err := loadFileConfig(cfg.ConfigPath)
-	if err != nil {
-		return nil, fmt.Errorf("读取配置文件失败: %w", err)
-	}
-	applyFileConfig(cfg, fileCfg, usedFlags)
-
-	if cfg.UserAgent == "" {
-		cfg.UserAgent = strings.TrimSpace(os.Getenv(userAgentEnvVar))
-	}
-	if cfg.UserAgent == "" {
-		cfg.UserAgent = defaultUserAgent
-	}
-	if cfg.DeviceID == "" {
-		cfg.DeviceID = strings.TrimSpace(os.Getenv(deviceIDEnvVar))
-	}
-	if cfg.AcceptLanguage == "" {
-		cfg.AcceptLanguage = strings.TrimSpace(os.Getenv(acceptLangEnvVar))
-	}
-	if cfg.Referer == "" {
-		cfg.Referer = strings.TrimSpace(os.Getenv(refererEnvVar))
-	}
-	if cfg.Cookie == "" {
-		cfg.Cookie = strings.TrimSpace(os.Getenv(cookieEnvVar))
-	}
-	if cfg.Origin == "" {
-		cfg.Origin = strings.TrimSpace(os.Getenv(originEnvVar))
-	}
-	if cfg.OaiLanguage == "" {
-		cfg.OaiLanguage = strings.TrimSpace(os.Getenv(oaiLanguageEnvVar))
-	}
-	if cfg.SecChUA == "" {
-		cfg.SecChUA = strings.TrimSpace(os.Getenv(secChUAEnvVar))
-	}
-	if cfg.SecChUAMobile == "" {
-		cfg.SecChUAMobile = strings.TrimSpace(os.Getenv(secChUAMobileEnv))
-	}
-	if cfg.SecChUAPlatform == "" {
-		cfg.SecChUAPlatform = strings.TrimSpace(os.Getenv(secChUAPlatformEnv))
-	}
-	if cfg.SecFetchDest == "" {
-		cfg.SecFetchDest = strings.TrimSpace(os.Getenv(secFetchDestEnv))
-	}
-	if cfg.SecFetchMode == "" {
-		cfg.SecFetchMode = strings.TrimSpace(os.Getenv(secFetchModeEnv))
-	}
-	if cfg.SecFetchSite == "" {
-		cfg.SecFetchSite = strings.TrimSpace(os.Getenv(secFetchSiteEnv))
-	}
-	if cfg.ChatGPTAccountID == "" {
-		cfg.ChatGPTAccountID = strings.TrimSpace(os.Getenv(accountIDEnvVar))
-	}
-	if cfg.OAIClientVersion == "" {
-		cfg.OAIClientVersion = strings.TrimSpace(os.Getenv(clientVersionEnvVar))
-	}
-	if cfg.Priority == "" {
-		cfg.Priority = strings.TrimSpace(os.Getenv(priorityEnvVar))
-	}
-	if cfg.AnytypeToken == "" {
-		cfg.AnytypeToken = strings.TrimSpace(os.Getenv(anytypeTokenEnvVar))
-	}
-	if cfg.AnytypeBaseURL == "" {
-		cfg.AnytypeBaseURL = strings.TrimSpace(os.Getenv(anytypeBaseURLEnvVar))
-	}
-	if cfg.AnytypeBaseURL == "" {
-		cfg.AnytypeBaseURL = defaultAnytypeBaseURL
-	} else {
-		cfg.AnytypeBaseURL = strings.TrimSpace(cfg.AnytypeBaseURL)
-	}
-	if cfg.AnytypeVersion == "" {
-		cfg.AnytypeVersion = strings.TrimSpace(os.Getenv(anytypeVersionEnvVar))
-	}
-	if cfg.AnytypeVersion == "" {
-		cfg.AnytypeVersion = defaultAnytypeVersion
-	}
-	if cfg.AnytypeSpaceID == "" {
-		cfg.AnytypeSpaceID = strings.TrimSpace(os.Getenv(anytypeSpaceIDEnvVar))
-	}
-	if cfg.AnytypeTypeKey == "" {
-		cfg.AnytypeTypeKey = strings.TrimSpace(os.Getenv(anytypeTypeKeyEnvVar))
-	}
-	if cfg.AnytypeTypeKey == "" {
-		cfg.AnytypeTypeKey = defaultAnytypeTypeKey
-	}
-	if cfg.ExportTarget == "" {
-		cfg.ExportTarget = strings.TrimSpace(os.Getenv(exportTargetEnvVar))
-	}
-	cfg.ExportTarget = strings.ToLower(strings.TrimSpace(cfg.ExportTarget))
-	if cfg.ExportTarget == "" {
-		cfg.ExportTarget = defaultExportTarget
-	}
-	if cfg.NotionToken == "" {
-		cfg.NotionToken = strings.TrimSpace(os.Getenv(notionTokenEnvVar))
-	}
-	if cfg.NotionBaseURL == "" {
-		cfg.NotionBaseURL = strings.TrimSpace(os.Getenv(notionBaseURLEnvVar))
-	}
-	cfg.NotionBaseURL = strings.TrimSpace(cfg.NotionBaseURL)
-	if cfg.NotionBaseURL == "" {
-		cfg.NotionBaseURL = defaultNotionBaseURL
-	} else {
-		cfg.NotionBaseURL = strings.TrimRight(cfg.NotionBaseURL, "/")
-	}
-	if cfg.NotionVersion == "" {
-		cfg.NotionVersion = strings.TrimSpace(os.Getenv(notionVersionEnvVar))
-	}
-	if cfg.NotionVersion == "" {
-		cfg.NotionVersion = defaultNotionVersion
-	}
-	if cfg.NotionParentType == "" {
-		cfg.NotionParentType = strings.TrimSpace(os.Getenv(notionParentTypeEnvVar))
-	}
-	cfg.NotionParentType = strings.ToLower(strings.TrimSpace(cfg.NotionParentType))
-	if cfg.NotionParentID == "" {
-		cfg.NotionParentID = strings.TrimSpace(os.Getenv(notionParentIDEnvVar))
-	}
-	if cfg.NotionTitleProperty == "" {
-		cfg.NotionTitleProperty = strings.TrimSpace(os.Getenv(notionTitlePropertyEnvVar))
-	}
 	cfg.ConfigDBPath = strings.TrimSpace(cfg.ConfigDBPath)
 	if cfg.ConfigDBPath == "" {
 		cfg.ConfigDBPath = defaultConfigDBPath
 	}
-	if cfg.ConfigSecret == "" {
-		cfg.ConfigSecret = strings.TrimSpace(os.Getenv(configSecretEnvVar))
-	}
-	cfg.ConfigSecret = strings.TrimSpace(cfg.ConfigSecret)
+
 	return cfg, nil
 }
 
@@ -390,4 +118,137 @@ func exitWithError(err error) {
 	logInfo("程序异常结束: %v", err)
 	fmt.Fprintln(os.Stderr, err)
 	os.Exit(1)
+}
+
+// loadPersistedConfig ensures the SQLite store exists, writes defaults when empty,
+// and merges persisted values back into the CLI config without overriding explicit flags.
+func loadPersistedConfig(cfg *cliConfig) error {
+	if cfg == nil {
+		return nil
+	}
+
+	usedFlags := make(map[string]struct{})
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	store, err := newConfigStore(cfg.ConfigDBPath)
+	if err != nil {
+		return fmt.Errorf("初始化配置存储失败: %w", err)
+	}
+	defer store.Close()
+
+	passwordInitialized := false
+
+	switch {
+	case store.HasPassword():
+		//	if secret == "" {
+		//		return fmt.Errorf("配置数据库已加密，请通过 --config-secret 或环境变量 %s 提供密码", configSecretEnvVar)
+		//	}
+		//	if err := store.Unlock(ctx, secret); err != nil {
+		//		return fmt.Errorf("配置存储解锁失败: %w", err)
+		//	}
+		//case secret != "":
+		//	if err := store.SetPassword(ctx, secret); err != nil {
+		//		return fmt.Errorf("初始化配置密码失败: %w", err)
+		//	}
+		passwordInitialized = true
+	}
+
+	hasConfig, err := store.HasConfigItems(ctx)
+	if err != nil {
+		return fmt.Errorf("检查配置状态失败: %w", err)
+	}
+	if !hasConfig {
+		payload := configToPayload(cfg)
+		if err := store.SaveConfig(ctx, payload); err != nil {
+			return fmt.Errorf("写入默认配置失败: %w", err)
+		}
+		applyPersistedConfig(cfg, payload, usedFlags)
+		return nil
+	}
+
+	payload, err := store.LoadConfig(ctx)
+	if err != nil {
+		if errors.Is(err, errConfigNotFound) {
+			return nil
+		}
+		return fmt.Errorf("读取配置失败: %w", err)
+	}
+	applyPersistedConfig(cfg, payload, usedFlags)
+
+	if passwordInitialized {
+		if err := store.SaveConfig(ctx, payload); err != nil {
+			return fmt.Errorf("配置重加密失败: %w", err)
+		}
+	}
+	return nil
+}
+
+func applyPersistedConfig(cfg *cliConfig, payload configPayload, usedFlags map[string]struct{}) {
+	if cfg == nil {
+		return
+	}
+	applyPersistedString(usedFlags, "listen", &cfg.ServeAddr, payload.Listen)
+	applyPersistedString(usedFlags, "timezone", &cfg.OutputTimezone, payload.Timezone)
+	if !flagUsed(usedFlags, "target") {
+		cfg.ExportTarget = normalizeExportTarget(payload.Target)
+	}
+	if !flagUsed(usedFlags, "base-url") {
+		cfg.BaseURL = ensureBaseURL(payload.BaseURL)
+	}
+	if !flagUsed(usedFlags, "order") {
+		cfg.Order = normalizeOrder(payload.Order)
+	}
+	applyPersistedInt(usedFlags, "page-size", &cfg.PageSize, payload.PageSize)
+	applyPersistedInt(usedFlags, "max", &cfg.MaxConversations, payload.MaxConversations)
+	applyPersistedInt(usedFlags, "offset", &cfg.InitialOffset, payload.InitialOffset)
+	applyPersistedBool(usedFlags, "include-archived", &cfg.IncludeArchived, payload.IncludeArchived)
+	applyPersistedString(usedFlags, "token", &cfg.Token, payload.Token)
+	applyPersistedString(usedFlags, "device-id", &cfg.DeviceID, payload.DeviceID)
+	applyPersistedString(usedFlags, "user-agent", &cfg.UserAgent, payload.UserAgent)
+	applyPersistedString(usedFlags, "accept-language", &cfg.AcceptLanguage, payload.AcceptLanguage)
+	applyPersistedString(usedFlags, "referer", &cfg.Referer, payload.Referer)
+	applyPersistedString(usedFlags, "cookie", &cfg.Cookie, payload.Cookie)
+	applyPersistedString(usedFlags, "origin", &cfg.Origin, payload.Origin)
+	applyPersistedString(usedFlags, "oai-language", &cfg.OaiLanguage, payload.OaiLanguage)
+	applyPersistedString(usedFlags, "sec-ch-ua", &cfg.SecChUA, payload.SecChUA)
+	applyPersistedString(usedFlags, "sec-ch-ua-mobile", &cfg.SecChUAMobile, payload.SecChUAMobile)
+	applyPersistedString(usedFlags, "sec-ch-ua-platform", &cfg.SecChUAPlatform, payload.SecChUAPlatform)
+	applyPersistedString(usedFlags, "sec-fetch-dest", &cfg.SecFetchDest, payload.SecFetchDest)
+	applyPersistedString(usedFlags, "sec-fetch-mode", &cfg.SecFetchMode, payload.SecFetchMode)
+	applyPersistedString(usedFlags, "sec-fetch-site", &cfg.SecFetchSite, payload.SecFetchSite)
+	applyPersistedString(usedFlags, "chatgpt-account-id", &cfg.ChatGPTAccountID, payload.ChatGPTAccountID)
+	applyPersistedString(usedFlags, "oai-client-version", &cfg.OAIClientVersion, payload.OAIClientVersion)
+	applyPersistedString(usedFlags, "priority", &cfg.Priority, payload.Priority)
+	applyPersistedString(usedFlags, "log-file", &cfg.LogPath, payload.LogPath)
+}
+
+func applyPersistedString(usedFlags map[string]struct{}, flagName string, dst *string, value string) {
+	if dst == nil || flagUsed(usedFlags, flagName) {
+		return
+	}
+	*dst = strings.TrimSpace(value)
+}
+
+func applyPersistedInt(usedFlags map[string]struct{}, flagName string, dst *int, value int) {
+	if dst == nil || flagUsed(usedFlags, flagName) {
+		return
+	}
+	*dst = value
+}
+
+func applyPersistedBool(usedFlags map[string]struct{}, flagName string, dst *bool, value bool) {
+	if dst == nil || flagUsed(usedFlags, flagName) {
+		return
+	}
+	*dst = value
+}
+
+func flagUsed(usedFlags map[string]struct{}, name string) bool {
+	if name == "" || usedFlags == nil {
+		return false
+	}
+	_, ok := usedFlags[name]
+	return ok
 }
