@@ -63,12 +63,34 @@ func (s *ConfigStore) ensureSchema(ctx context.Context) error {
 		return fmt.Errorf("初始化配置项表失败: %w", err)
 	}
 
-	//// 写入默认的配置项
-	//_, err := s.db.ExecContext(ctx, `INSERT OR IGNORE INTO config_items(key, value, encrypted, updated_at)`)
-	//if err != nil {
-	//	return err
-	//}
+	if err := s.ensureDefaultConfigItems(ctx); err != nil {
+		return err
+	}
+	return nil
+}
 
+func (s *ConfigStore) ensureDefaultConfigItems(ctx context.Context) error {
+	defaults := map[string]string{
+		"listen":            defaultListenAddr,
+		"timezone":          "",
+		"target":            exportTargetAnytype,
+		"base_url":          defaultBaseURL,
+		"order":             defaultOrder,
+		"page_size":         strconv.Itoa(defaultPageSize),
+		"max_conversations": strconv.Itoa(defaultMaxConversations),
+		"initial_offset":    strconv.Itoa(defaultInitialOffset),
+		"include_archived":  strconv.FormatBool(false),
+	}
+	now := time.Now().UTC()
+	for key, value := range defaults {
+		if _, err := s.db.ExecContext(ctx, `
+			INSERT INTO config_items(key, value, encrypted, updated_at)
+			VALUES(?, ?, 0, ?)
+			ON CONFLICT(key) DO NOTHING
+		`, key, []byte(value), now); err != nil {
+			return fmt.Errorf("写入默认配置项 %s 失败: %w", key, err)
+		}
+	}
 	return nil
 }
 

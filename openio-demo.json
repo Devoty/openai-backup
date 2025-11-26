@@ -1,0 +1,3135 @@
+{
+    "title": "奖励发放时间查询",
+    "create_time": 1764054376.708329,
+    "update_time": 1764054465.485304,
+    "mapping": {
+        "client-created-root": {
+            "id": "client-created-root",
+            "message": null,
+            "parent": null,
+            "children": [
+                "27757c71-8431-42eb-98e6-c2d91c390870"
+            ]
+        },
+        "27757c71-8431-42eb-98e6-c2d91c390870": {
+            "id": "27757c71-8431-42eb-98e6-c2d91c390870",
+            "message": {
+                "id": "27757c71-8431-42eb-98e6-c2d91c390870",
+                "author": {
+                    "role": "system",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": null,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": true,
+                "weight": 0.0,
+                "metadata": {
+                    "is_visually_hidden_from_conversation": true
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "client-created-root",
+            "children": [
+                "54117c94-0d57-4811-a9a8-d3e2dd8bc483"
+            ]
+        },
+        "54117c94-0d57-4811-a9a8-d3e2dd8bc483": {
+            "id": "54117c94-0d57-4811-a9a8-d3e2dd8bc483",
+            "message": {
+                "id": "54117c94-0d57-4811-a9a8-d3e2dd8bc483",
+                "author": {
+                    "role": "system",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": null,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "is_contextual_answers_system_message": true,
+                    "contextual_answers_message_type": "identity_prompt",
+                    "is_visually_hidden_from_conversation": true
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "27757c71-8431-42eb-98e6-c2d91c390870",
+            "children": [
+                "b1fe0670-d2c5-4d60-b680-64acc0ca0870"
+            ]
+        },
+        "b1fe0670-d2c5-4d60-b680-64acc0ca0870": {
+            "id": "b1fe0670-d2c5-4d60-b680-64acc0ca0870",
+            "message": {
+                "id": "b1fe0670-d2c5-4d60-b680-64acc0ca0870",
+                "author": {
+                    "role": "user",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054375.778,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "汇丰 tread 25 计划的奖励一般是什么时候发放？"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "developer_mode_connector_ids": [],
+                    "selected_sources": [],
+                    "selected_github_repos": [],
+                    "serialization_metadata": {
+                        "custom_symbol_offsets": []
+                    },
+                    "request_id": "79102dbb-9da4-478f-87fd-ea54caed23d6",
+                    "message_source": null,
+                    "turn_exchange_id": "ed8bf909-d705-47bb-8374-4adfd237c7ee"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "54117c94-0d57-4811-a9a8-d3e2dd8bc483",
+            "children": [
+                "569b82c8-2372-4c73-8553-323bec9593a3"
+            ]
+        },
+        "569b82c8-2372-4c73-8553-323bec9593a3": {
+            "id": "569b82c8-2372-4c73-8553-323bec9593a3",
+            "message": {
+                "id": "569b82c8-2372-4c73-8553-323bec9593a3",
+                "author": {
+                    "role": "system",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054376.6791608,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "is_contextual_answers_system_message": true,
+                    "is_visually_hidden_from_conversation": true,
+                    "command": "prompt",
+                    "contextual_answers_message_type": "sources_and_filters_prompt",
+                    "request_id": "79102dbb-9da4-478f-87fd-ea54caed23d6",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "b1fe0670-d2c5-4d60-b680-64acc0ca0870",
+                    "turn_exchange_id": "ed8bf909-d705-47bb-8374-4adfd237c7ee"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "b1fe0670-d2c5-4d60-b680-64acc0ca0870",
+            "children": [
+                "cf2a6361-20cc-4f1b-97b9-4883871c26ae"
+            ]
+        },
+        "cf2a6361-20cc-4f1b-97b9-4883871c26ae": {
+            "id": "cf2a6361-20cc-4f1b-97b9-4883871c26ae",
+            "message": {
+                "id": "cf2a6361-20cc-4f1b-97b9-4883871c26ae",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054377.249648,
+                "update_time": null,
+                "content": {
+                    "content_type": "model_editable_context",
+                    "model_set_context": "",
+                    "repository": null,
+                    "repo_summary": null,
+                    "structured_context": null
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "request_id": "79102dbb-9da4-478f-87fd-ea54caed23d6",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "569b82c8-2372-4c73-8553-323bec9593a3",
+                    "turn_exchange_id": "ed8bf909-d705-47bb-8374-4adfd237c7ee",
+                    "model_switcher_deny": []
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "569b82c8-2372-4c73-8553-323bec9593a3",
+            "children": [
+                "a25ff0e4-f61a-42c5-b4ac-9f54e5808548"
+            ]
+        },
+        "a25ff0e4-f61a-42c5-b4ac-9f54e5808548": {
+            "id": "a25ff0e4-f61a-42c5-b4ac-9f54e5808548",
+            "message": {
+                "id": "a25ff0e4-f61a-42c5-b4ac-9f54e5808548",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054376.6753728,
+                "update_time": null,
+                "content": {
+                    "content_type": "code",
+                    "language": "unknown",
+                    "response_format_name": null,
+                    "text": "search(\"\\u6c47\\u4e30 tread 25 \\u8ba1\\u5212\\u7684\\u5956\\u52b1\\u4e00\\u822c\\u662f\\u4ec0\\u4e48\\u65f6\\u5019\\u53d1\\u653e\\uff1f\")"
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "sonic_classification_result": {
+                        "latency_ms": 0.0708230072632432,
+                        "simple_search_prob": 0.9546775757647812,
+                        "complex_search_prob": 0.010791586762601068,
+                        "no_search_prob": 0.034530837472617745,
+                        "simple_search_threshold": 0.0,
+                        "complex_search_threshold": 0.4,
+                        "no_search_threshold": 0.12,
+                        "threshold_order": [
+                            "no_search",
+                            "complex",
+                            "simple"
+                        ],
+                        "classifier_config_name": "sonic_classifier_3cls_ev3",
+                        "classifier_config": {
+                            "model_name": "snc-pg-sw-3cls-ev3",
+                            "renderer_name": "harmony_v4.0.15_16k_orion_text_only_no_asr_2k_action",
+                            "force_disabled_rate": 0.0,
+                            "force_enabled_rate": 0.0,
+                            "num_messages": 20,
+                            "only_user_messages": false,
+                            "remove_memory": true,
+                            "support_mm": true,
+                            "n_ctx": 2048,
+                            "max_action_length": 4,
+                            "dynamic_set_max_message_size": false,
+                            "max_message_tokens": 2000,
+                            "append_base_config": false,
+                            "no_search_token": "1",
+                            "simple_search_token": "7",
+                            "complex_search_token": "5",
+                            "simple_search_threshold": 0.0,
+                            "complex_search_threshold": 0.4,
+                            "no_search_threshold": 0.12,
+                            "prefetch_threshold": 0.55,
+                            "force_search_first_turn_threshold": 0.00001,
+                            "threshold_order": [
+                                "no_search",
+                                "complex",
+                                "simple"
+                            ],
+                            "passthrough_tool_calls": null,
+                            "timeout": 1.0
+                        },
+                        "decision_source": "classifier",
+                        "passthrough_tool_names": []
+                    },
+                    "citations": [],
+                    "content_references": [],
+                    "request_id": "79102dbb-9da4-478f-87fd-ea54caed23d6",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "cf2a6361-20cc-4f1b-97b9-4883871c26ae",
+                    "turn_exchange_id": "ed8bf909-d705-47bb-8374-4adfd237c7ee",
+                    "model_switcher_deny": []
+                },
+                "recipient": "web",
+                "channel": null
+            },
+            "parent": "cf2a6361-20cc-4f1b-97b9-4883871c26ae",
+            "children": [
+                "ced8fa54-f9c9-402d-a538-04d37931bb95"
+            ]
+        },
+        "ced8fa54-f9c9-402d-a538-04d37931bb95": {
+            "id": "ced8fa54-f9c9-402d-a538-04d37931bb95",
+            "message": {
+                "id": "ced8fa54-f9c9-402d-a538-04d37931bb95",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054377.4296591,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_model_queries": {
+                        "type": "search_model_queries",
+                        "queries": [
+                            "HSBC Tread25 plan reward when issued"
+                        ]
+                    },
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "79102dbb-9da4-478f-87fd-ea54caed23d6",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "a25ff0e4-f61a-42c5-b4ac-9f54e5808548",
+                    "turn_exchange_id": "ed8bf909-d705-47bb-8374-4adfd237c7ee"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "a25ff0e4-f61a-42c5-b4ac-9f54e5808548",
+            "children": [
+                "b8325849-cf51-4ae7-ae74-80e3e4ebea94"
+            ]
+        },
+        "b8325849-cf51-4ae7-ae74-80e3e4ebea94": {
+            "id": "b8325849-cf51-4ae7-ae74-80e3e4ebea94",
+            "message": {
+                "id": "b8325849-cf51-4ae7-ae74-80e3e4ebea94",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054377.4276526,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "retailbank.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf",
+                                    "title": "2022_08_HSBC One U Student Investment ...",
+                                    "snippet": "Offer 1 Join HSBC Trade25 via HSBC HK Easy Invest app and remain opt-in to HSBC HKD50 Trade25 till 30 April 2023. Offer 2 Join HSBC Trade25 and execute at ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 0
+                                    },
+                                    "pub_date": 1664768439.0,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/media/11149/comparison-table_en_dec.pdf",
+                                    "title": "Compare all rewards (Existing HSBC One customers)",
+                                    "snippet": "13 Dec 2024 — The promotional period for HSBC VHIS Flexi Plan basic rewards is from 1 October 2024 to 31 December 2024 (both dates inclusive). Terms and ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": 1734091238.0,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "snippet": "Enjoy $0 commission with Trade25 and earn up to HK$1000 Apple Store Gift Card! Don't hesitate - Act now and claim your rewards!",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 6
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "snippet": "For just HKD25 a month, join and you'll get: $0 commission on HK, US and China A stocks; $0 platform fees; Free access to our Trade25 Academy to level up your ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 1
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "fundselectorasia.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://fundselectorasia.com/hsbc-pursues-asia-millennials/",
+                                    "title": "HSBC pursues Asia millennials",
+                                    "snippet": "6 Oct 2021 — The incentives include zero commission stock trading, an educational service and a revamped unit trust investment platform.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 2
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "fundselectorasia.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.hsbc.com.sg",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.sg/content/dam/hsbc/sg/documents/premier/offers/welcome-reward-promotion-and-referral-programme.pdf",
+                                    "title": "HSBC Welcome Rewards Promotion (November 2025) (“ ...",
+                                    "snippet": "1 Nov 2025 — (G) existing customers who (I) hold an existing HSBC Personal Banking account with us within 12 months prior to 1 November 2025, (II) did not ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": 1761637505.0,
+                                    "attribution": "www.hsbc.com.sg"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.sg/content/dam/hsbc/sg/documents/promotions/premier-upfunding-rewards-promotion.pdf",
+                                    "title": "HSBC Premier Upfunding Rewards Promotion (November ...",
+                                    "snippet": "1 Nov 2025 — The Rewards will be issued on a first-come-first served basis. As ... For more information on the types of benefits that are covered under the.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 7
+                                    },
+                                    "pub_date": 1762140274.0,
+                                    "attribution": "www.hsbc.com.sg"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.instagram.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/p/Cy255YOMfGi/",
+                                    "title": "【突破Comfort Zone開始投資｜加入滙豐Trade25，送高達 ...",
+                                    "snippet": "... HSBC Trade25 to get a cash reward of HKD50 Make your first stock trade of at least HKD300 to receive a cash reward of HKD300 Open your ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 5
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.instagram.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/reel/Cd-k7KGrvkM/",
+                                    "title": "【All@滙豐One. All at once.｜後生仔福利：減低投資成本有妙法 ...",
+                                    "snippet": "經網上或流動理財首次以不少於500港元完成股票或基金投資買入交易，可享500港元現金獎賞！ 用HSBC HK App 5分鐘開戶^ ，仲可享高達400港元現金獎賞！ 加埋 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 8
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.instagram.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.facebook.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "於10 個不同日曆週完成10 筆合資格交易，一共可賺到高達港幣1,000元Apple Store禮品卡 ～ 投資兼換新iPhone，加入滙豐Trade25就可以一Trade兩 得⚡️！ 每3個香港 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 9
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.facebook.com"
+                                }
+                            ]
+                        }
+                    ],
+                    "debug_sonic_thread_id": "thread_692555697ffc8321907abdaea0bbf11f",
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "79102dbb-9da4-478f-87fd-ea54caed23d6",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "ced8fa54-f9c9-402d-a538-04d37931bb95",
+                    "turn_exchange_id": "ed8bf909-d705-47bb-8374-4adfd237c7ee"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "ced8fa54-f9c9-402d-a538-04d37931bb95",
+            "children": [
+                "1a04d727-728e-486d-8987-00de2fab7661"
+            ]
+        },
+        "1a04d727-728e-486d-8987-00de2fab7661": {
+            "id": "1a04d727-728e-486d-8987-00de2fab7661",
+            "message": {
+                "id": "1a04d727-728e-486d-8987-00de2fab7661",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054378.674114,
+                "update_time": 1764054380.81262,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "根据 entity[\"organization\", \"HSBC\", 0]（香港分行）有关 entity[\"financial_product\", \"HSBC Trade25\", 0]（“Trade25”）计划的资料，奖励发放时间视具体促销活动条款而定。例如：\n\n- 在一份 2022 年的推广文件中，条件达成后注明：“Cash Reward 将于 **2023 年 4 月 30 日或之前** 计入合资格客户的账户。” citeturn0search0  \n- 在另一份最近的说明中，尽管没有明确指出“奖励何时发放”，但列出了促销活动结束日期为 “31 December 2025” 并提示条件要在该日期前达成。 citeturn0search6  \n\n因此，如果你参加的是当前或近期的 Trade25 奖励计划，建议你查看你所参与那个**具体促销条款**（因每次活动的奖励发放机制、时限可能不同）。若你愿意，我可以帮你查找你所参加的那个版本（例如截止日期、参与年龄、交易次数等）对应的“奖励发放日”具体条款。你看要不要？"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": true,
+                "weight": 1.0,
+                "metadata": {
+                    "content_references": [
+                        {
+                            "matched_text": "entity[\"organization\", \"HSBC\", 0]",
+                            "start_idx": 3,
+                            "end_idx": 39,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "HSBC",
+                            "prompt_text": "HSBC",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "entity[\"financial_product\", \"HSBC Trade25\", 0]",
+                            "start_idx": 48,
+                            "end_idx": 97,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "HSBC Trade25",
+                            "prompt_text": "HSBC Trade25",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "citeturn0search0",
+                            "start_idx": 216,
+                            "end_idx": 235,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf",
+                                "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "2022_08_HSBC One U Student Investment ...",
+                                    "url": "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf?utm_source=chatgpt.com",
+                                    "pub_date": 1664768439.0,
+                                    "snippet": "Offer 1 Join HSBC Trade25 via HSBC HK Easy Invest app and remain opt-in to HSBC HKD50 Trade25 till 30 April 2023. Offer 2 Join HSBC Trade25 and execute at ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search6",
+                            "start_idx": 316,
+                            "end_idx": 335,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Enjoy $0 commission with Trade25 and earn up to HK$1000 Apple Store Gift Card! Don't hesitate - Act now and claim your rewards!",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 6
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": " ",
+                            "start_idx": 473,
+                            "end_idx": 473,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "",
+                            "prompt_text": null,
+                            "type": "sources_footnote",
+                            "sources": [
+                                {
+                                    "title": "2022_08_HSBC One U Student Investment ...",
+                                    "url": "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf?utm_source=chatgpt.com",
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "has_images": false
+                        }
+                    ],
+                    "safe_urls": [
+                        "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf",
+                        "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf?utm_source=chatgpt.com",
+                        "https://retailbank.hsbc.com.hk/trade25/en/home",
+                        "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com"
+                    ],
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "snippet": "For just HKD25 a month, join and you'll get: $0 commission on HK, US and China A stocks; $0 platform fees; Free access to our Trade25 Academy to level up your ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 1
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/media/11149/comparison-table_en_dec.pdf?utm_source=chatgpt.com",
+                                    "title": "Compare all rewards (Existing HSBC One customers)",
+                                    "snippet": "13 Dec 2024 — The promotional period for HSBC VHIS Flexi Plan basic rewards is from 1 October 2024 to 31 December 2024 (both dates inclusive). Terms and ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "fundselectorasia.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://fundselectorasia.com/hsbc-pursues-asia-millennials/?utm_source=chatgpt.com",
+                                    "title": "HSBC pursues Asia millennials",
+                                    "snippet": "6 Oct 2021 — The incentives include zero commission stock trading, an educational service and a revamped unit trust investment platform.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 2
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "fundselectorasia.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "hsbc.com.sg",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.sg/content/dam/hsbc/sg/documents/premier/offers/welcome-reward-promotion-and-referral-programme.pdf?utm_source=chatgpt.com",
+                                    "title": "HSBC Welcome Rewards Promotion (November 2025) (“ ...",
+                                    "snippet": "1 Nov 2025 — (G) existing customers who (I) hold an existing HSBC Personal Banking account with us within 12 months prior to 1 November 2025, (II) did not ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.sg"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.sg/content/dam/hsbc/sg/documents/promotions/premier-upfunding-rewards-promotion.pdf?utm_source=chatgpt.com",
+                                    "title": "HSBC Premier Upfunding Rewards Promotion (November ...",
+                                    "snippet": "1 Nov 2025 — The Rewards will be issued on a first-come-first served basis. As ... For more information on the types of benefits that are covered under the.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 7
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.sg"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "instagram.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/p/Cy255YOMfGi/?utm_source=chatgpt.com",
+                                    "title": "【突破Comfort Zone開始投資｜加入滙豐Trade25，送高達 ...",
+                                    "snippet": "... HSBC Trade25 to get a cash reward of HKD50 Make your first stock trade of at least HKD300 to receive a cash reward of HKD300 Open your ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 5
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "instagram.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/reel/Cd-k7KGrvkM/?utm_source=chatgpt.com",
+                                    "title": "【All@滙豐One. All at once.｜後生仔福利：減低投資成本有妙法 ...",
+                                    "snippet": "經網上或流動理財首次以不少於500港元完成股票或基金投資買入交易，可享500港元現金獎賞！ 用HSBC HK App 5分鐘開戶^ ，仲可享高達400港元現金獎賞！ 加埋 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 8
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "instagram.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "facebook.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/?utm_source=chatgpt.com",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "於10 個不同日曆週完成10 筆合資格交易，一共可賺到高達港幣1,000元Apple Store禮品卡 ～ 投資兼換新iPhone，加入滙豐Trade25就可以一Trade兩 得⚡️！ 每3個香港 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 9
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "facebook.com"
+                                }
+                            ]
+                        }
+                    ],
+                    "citations": [],
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "79102dbb-9da4-478f-87fd-ea54caed23d6",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "b8325849-cf51-4ae7-ae74-80e3e4ebea94",
+                    "turn_exchange_id": "ed8bf909-d705-47bb-8374-4adfd237c7ee",
+                    "model_switcher_deny": []
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "b8325849-cf51-4ae7-ae74-80e3e4ebea94",
+            "children": [
+                "75044fb2-73a1-49cb-8ad0-374efd57597a"
+            ]
+        },
+        "75044fb2-73a1-49cb-8ad0-374efd57597a": {
+            "id": "75044fb2-73a1-49cb-8ad0-374efd57597a",
+            "message": {
+                "id": "75044fb2-73a1-49cb-8ad0-374efd57597a",
+                "author": {
+                    "role": "user",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054407.308,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "发放的是苹果礼品卡吗？"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "developer_mode_connector_ids": [],
+                    "selected_sources": [],
+                    "selected_github_repos": [],
+                    "serialization_metadata": {
+                        "custom_symbol_offsets": []
+                    },
+                    "request_id": "14d21b70-f0b5-4015-9101-d9c8cf9c135e",
+                    "message_source": null,
+                    "turn_exchange_id": "9815ec47-7b89-4bdd-a628-68d1a3e16af5"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "1a04d727-728e-486d-8987-00de2fab7661",
+            "children": [
+                "76b58b26-a16f-474c-9d1c-6520e15a85d6"
+            ]
+        },
+        "76b58b26-a16f-474c-9d1c-6520e15a85d6": {
+            "id": "76b58b26-a16f-474c-9d1c-6520e15a85d6",
+            "message": {
+                "id": "76b58b26-a16f-474c-9d1c-6520e15a85d6",
+                "author": {
+                    "role": "system",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054407.8049436,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "is_contextual_answers_system_message": true,
+                    "is_visually_hidden_from_conversation": true,
+                    "command": "prompt",
+                    "contextual_answers_message_type": "sources_and_filters_prompt",
+                    "request_id": "14d21b70-f0b5-4015-9101-d9c8cf9c135e",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "75044fb2-73a1-49cb-8ad0-374efd57597a",
+                    "turn_exchange_id": "9815ec47-7b89-4bdd-a628-68d1a3e16af5"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "75044fb2-73a1-49cb-8ad0-374efd57597a",
+            "children": [
+                "48f5d59d-f8b4-4215-808a-c595878a8384"
+            ]
+        },
+        "48f5d59d-f8b4-4215-808a-c595878a8384": {
+            "id": "48f5d59d-f8b4-4215-808a-c595878a8384",
+            "message": {
+                "id": "48f5d59d-f8b4-4215-808a-c595878a8384",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054407.8222077,
+                "update_time": null,
+                "content": {
+                    "content_type": "code",
+                    "language": "unknown",
+                    "response_format_name": null,
+                    "text": "search(\"\\u53d1\\u653e\\u7684\\u662f\\u82f9\\u679c\\u793c\\u54c1\\u5361\\u5417\\uff1f\")"
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "sonic_classification_result": {
+                        "latency_ms": 0.07967697456479073,
+                        "simple_search_prob": 0.8890483719974568,
+                        "complex_search_prob": 0.010833576011831025,
+                        "no_search_prob": 0.10011805199071219,
+                        "simple_search_threshold": 0.0,
+                        "complex_search_threshold": 0.4,
+                        "no_search_threshold": 0.12,
+                        "threshold_order": [
+                            "no_search",
+                            "complex",
+                            "simple"
+                        ],
+                        "classifier_config_name": "sonic_classifier_3cls_ev3",
+                        "classifier_config": {
+                            "model_name": "snc-pg-sw-3cls-ev3",
+                            "renderer_name": "harmony_v4.0.15_16k_orion_text_only_no_asr_2k_action",
+                            "force_disabled_rate": 0.0,
+                            "force_enabled_rate": 0.0,
+                            "num_messages": 20,
+                            "only_user_messages": false,
+                            "remove_memory": true,
+                            "support_mm": true,
+                            "n_ctx": 2048,
+                            "max_action_length": 4,
+                            "dynamic_set_max_message_size": false,
+                            "max_message_tokens": 2000,
+                            "append_base_config": false,
+                            "no_search_token": "1",
+                            "simple_search_token": "7",
+                            "complex_search_token": "5",
+                            "simple_search_threshold": 0.0,
+                            "complex_search_threshold": 0.4,
+                            "no_search_threshold": 0.12,
+                            "prefetch_threshold": 0.55,
+                            "force_search_first_turn_threshold": 0.00001,
+                            "threshold_order": [
+                                "no_search",
+                                "complex",
+                                "simple"
+                            ],
+                            "passthrough_tool_calls": null,
+                            "timeout": 1.0
+                        },
+                        "decision_source": "classifier",
+                        "passthrough_tool_names": []
+                    },
+                    "citations": [],
+                    "content_references": [],
+                    "request_id": "14d21b70-f0b5-4015-9101-d9c8cf9c135e",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "76b58b26-a16f-474c-9d1c-6520e15a85d6",
+                    "turn_exchange_id": "9815ec47-7b89-4bdd-a628-68d1a3e16af5",
+                    "model_switcher_deny": []
+                },
+                "recipient": "web",
+                "channel": null
+            },
+            "parent": "76b58b26-a16f-474c-9d1c-6520e15a85d6",
+            "children": [
+                "fe8e6d9f-1032-4faa-994b-9579dda55f3c"
+            ]
+        },
+        "fe8e6d9f-1032-4faa-994b-9579dda55f3c": {
+            "id": "fe8e6d9f-1032-4faa-994b-9579dda55f3c",
+            "message": {
+                "id": "fe8e6d9f-1032-4faa-994b-9579dda55f3c",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054408.87974,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_model_queries": {
+                        "type": "search_model_queries",
+                        "queries": [
+                            "HSBC Trade25 plan reward what is the reward HSBC Trade25 Apple gift card"
+                        ]
+                    },
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "14d21b70-f0b5-4015-9101-d9c8cf9c135e",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "48f5d59d-f8b4-4215-808a-c595878a8384",
+                    "turn_exchange_id": "9815ec47-7b89-4bdd-a628-68d1a3e16af5"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "48f5d59d-f8b4-4215-808a-c595878a8384",
+            "children": [
+                "17485426-68c8-464b-bdbc-a28446d13e02"
+            ]
+        },
+        "17485426-68c8-464b-bdbc-a28446d13e02": {
+            "id": "17485426-68c8-464b-bdbc-a28446d13e02",
+            "message": {
+                "id": "17485426-68c8-464b-bdbc-a28446d13e02",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054408.878359,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "retailbank.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                    "title": "HSBC | Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 0
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 1
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/",
+                                    "title": "Stocks Investments - HSBC HK",
+                                    "snippet": "Complete 1 stock trade to earn HKD100 reward and enjoy up to HKD1,000 Apple Store Gift Card by 31 December 2025! ... Download the HSBC HK Mobile Banking app in ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 2
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "yummy.best",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+                                    "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                    "snippet": "2025 年12 月31 日前，使用汇丰Trade25 买卖股票，完成10 笔符合条件的股票交易(不限金额)，即可获得HK$ 1000的Apple Gift Card.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": 1732924800.0,
+                                    "attribution": "yummy.best"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "play.google.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://play.google.com/store/apps/details?hl=en_US&id=hk.com.hsbc.hsbchkeasyinvest",
+                                    "title": "HSBC HK Easy Invest - Apps on Google Play",
+                                    "snippet": "You can sign up to our HSBC Top Trader Club featuring brokerage fees as low as 0.01% (minimum HKD8 / RMB8 / USD1) and HKD time deposit returns as high as 10% ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "play.google.com"
+                                }
+                            ]
+                        }
+                    ],
+                    "debug_sonic_thread_id": "thread_69255588e7a08326b42a52faa3f25d13",
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "14d21b70-f0b5-4015-9101-d9c8cf9c135e",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "fe8e6d9f-1032-4faa-994b-9579dda55f3c",
+                    "turn_exchange_id": "9815ec47-7b89-4bdd-a628-68d1a3e16af5"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "fe8e6d9f-1032-4faa-994b-9579dda55f3c",
+            "children": [
+                "bca278c3-df99-42df-86a8-417289ec19c9"
+            ]
+        },
+        "bca278c3-df99-42df-86a8-417289ec19c9": {
+            "id": "bca278c3-df99-42df-86a8-417289ec19c9",
+            "message": {
+                "id": "bca278c3-df99-42df-86a8-417289ec19c9",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054409.74469,
+                "update_time": 1764054411.019526,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "是的，根据 entity[\"organization\", \"The Hongkong and Shanghai Banking Corporation Limited\", 0]（香港分行）官网介绍，参与其 **entity[\"financial_product\", \"HSBC Trade25\", 0]** 计划、满足活动条件后，所发放的奖励为 “Apple Store Gift Card”（苹果 Store 礼品卡）。citeturn0search0turn0search1turn0search2\n\n如果你愿意，我可以帮你查一下该礼品卡的使用细则（例如是否限香港地区、兑换方式、是否可用于线上／线下 Apple Store 等）。"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": true,
+                "weight": 1.0,
+                "metadata": {
+                    "content_references": [
+                        {
+                            "matched_text": "entity[\"organization\", \"The Hongkong and Shanghai Banking Corporation Limited\", 0]",
+                            "start_idx": 6,
+                            "end_idx": 91,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "The Hongkong and Shanghai Banking Corporation Limited",
+                            "prompt_text": "The Hongkong and Shanghai Banking Corporation Limited",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "entity[\"financial_product\", \"HSBC Trade25\", 0]",
+                            "start_idx": 108,
+                            "end_idx": 157,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "HSBC Trade25",
+                            "prompt_text": "HSBC Trade25",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "citeturn0search0turn0search1turn0search2",
+                            "start_idx": 217,
+                            "end_idx": 262,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                "https://www.hsbc.com.hk/investments/products/stocks/",
+                                "https://www.hsbc.com.hk/investments/products/stocks/?utm_source=chatgpt.com",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "HSBC | Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [
+                                        {
+                                            "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                            "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                            "attribution": "汇丰香港"
+                                        },
+                                        {
+                                            "title": "Stocks Investments - HSBC HK",
+                                            "url": "https://www.hsbc.com.hk/investments/products/stocks/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "Complete 1 stock trade to earn HKD100 reward and enjoy up to HKD1,000 Apple Store Gift Card by 31 December 2025! ... Download the HSBC HK Mobile Banking app in ...",
+                                            "attribution": "汇丰香港"
+                                        }
+                                    ],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 1
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 2
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": " ",
+                            "start_idx": 329,
+                            "end_idx": 329,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "",
+                            "prompt_text": null,
+                            "type": "sources_footnote",
+                            "sources": [
+                                {
+                                    "title": "HSBC | Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "has_images": false
+                        }
+                    ],
+                    "safe_urls": [
+                        "https://retailbank.hsbc.com.hk/trade25/en/home",
+                        "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                        "https://www.hsbc.com.hk/investments/products/stocks/",
+                        "https://www.hsbc.com.hk/investments/products/stocks/?utm_source=chatgpt.com",
+                        "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                        "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com"
+                    ],
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 1
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/?utm_source=chatgpt.com",
+                                    "title": "Stocks Investments - HSBC HK",
+                                    "snippet": "Complete 1 stock trade to earn HKD100 reward and enjoy up to HKD1,000 Apple Store Gift Card by 31 December 2025! ... Download the HSBC HK Mobile Banking app in ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 2
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "yummy.best",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com",
+                                    "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                    "snippet": "2025 年12 月31 日前，使用汇丰Trade25 买卖股票，完成10 笔符合条件的股票交易(不限金额)，即可获得HK$ 1000的Apple Gift Card.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": 1732924800.0,
+                                    "attribution": "yummy.best"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "google.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://play.google.com/store/apps/details?hl=en_US&id=hk.com.hsbc.hsbchkeasyinvest&utm_source=chatgpt.com",
+                                    "title": "HSBC HK Easy Invest - Apps on Google Play",
+                                    "snippet": "You can sign up to our HSBC Top Trader Club featuring brokerage fees as low as 0.01% (minimum HKD8 / RMB8 / USD1) and HKD time deposit returns as high as 10% ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "google.com"
+                                }
+                            ]
+                        }
+                    ],
+                    "citations": [],
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "14d21b70-f0b5-4015-9101-d9c8cf9c135e",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "17485426-68c8-464b-bdbc-a28446d13e02",
+                    "turn_exchange_id": "9815ec47-7b89-4bdd-a628-68d1a3e16af5",
+                    "model_switcher_deny": []
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "17485426-68c8-464b-bdbc-a28446d13e02",
+            "children": [
+                "0f2a65dc-9dfe-4fd0-9d48-7067d92d9627"
+            ]
+        },
+        "0f2a65dc-9dfe-4fd0-9d48-7067d92d9627": {
+            "id": "0f2a65dc-9dfe-4fd0-9d48-7067d92d9627",
+            "message": {
+                "id": "0f2a65dc-9dfe-4fd0-9d48-7067d92d9627",
+                "author": {
+                    "role": "user",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054421.15,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "可以"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "developer_mode_connector_ids": [],
+                    "selected_sources": [],
+                    "selected_github_repos": [],
+                    "serialization_metadata": {
+                        "custom_symbol_offsets": []
+                    },
+                    "request_id": "21c5ec89-f4f5-4fc2-a258-5df4b6bba945",
+                    "message_source": null,
+                    "turn_exchange_id": "5849b79a-de75-497e-bb76-938bed69e1c9"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "bca278c3-df99-42df-86a8-417289ec19c9",
+            "children": [
+                "baaab4ad-2383-4946-82df-3a449ff1f420"
+            ]
+        },
+        "baaab4ad-2383-4946-82df-3a449ff1f420": {
+            "id": "baaab4ad-2383-4946-82df-3a449ff1f420",
+            "message": {
+                "id": "baaab4ad-2383-4946-82df-3a449ff1f420",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054421.8974392,
+                "update_time": null,
+                "content": {
+                    "content_type": "code",
+                    "language": "unknown",
+                    "response_format_name": null,
+                    "text": "search(\"\\u53ef\\u4ee5\")"
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "sonic_classification_result": {
+                        "latency_ms": 0.07859105244278908,
+                        "simple_search_prob": 0.943498523659929,
+                        "complex_search_prob": 0.03149959744601765,
+                        "no_search_prob": 0.025001878894053316,
+                        "simple_search_threshold": 0.0,
+                        "complex_search_threshold": 0.4,
+                        "no_search_threshold": 0.12,
+                        "threshold_order": [
+                            "no_search",
+                            "complex",
+                            "simple"
+                        ],
+                        "classifier_config_name": "sonic_classifier_3cls_ev3",
+                        "classifier_config": {
+                            "model_name": "snc-pg-sw-3cls-ev3",
+                            "renderer_name": "harmony_v4.0.15_16k_orion_text_only_no_asr_2k_action",
+                            "force_disabled_rate": 0.0,
+                            "force_enabled_rate": 0.0,
+                            "num_messages": 20,
+                            "only_user_messages": false,
+                            "remove_memory": true,
+                            "support_mm": true,
+                            "n_ctx": 2048,
+                            "max_action_length": 4,
+                            "dynamic_set_max_message_size": false,
+                            "max_message_tokens": 2000,
+                            "append_base_config": false,
+                            "no_search_token": "1",
+                            "simple_search_token": "7",
+                            "complex_search_token": "5",
+                            "simple_search_threshold": 0.0,
+                            "complex_search_threshold": 0.4,
+                            "no_search_threshold": 0.12,
+                            "prefetch_threshold": 0.55,
+                            "force_search_first_turn_threshold": 0.00001,
+                            "threshold_order": [
+                                "no_search",
+                                "complex",
+                                "simple"
+                            ],
+                            "passthrough_tool_calls": null,
+                            "timeout": 1.0
+                        },
+                        "decision_source": "classifier",
+                        "passthrough_tool_names": []
+                    },
+                    "citations": [],
+                    "content_references": [],
+                    "request_id": "21c5ec89-f4f5-4fc2-a258-5df4b6bba945",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "0f2a65dc-9dfe-4fd0-9d48-7067d92d9627",
+                    "turn_exchange_id": "5849b79a-de75-497e-bb76-938bed69e1c9",
+                    "model_switcher_deny": []
+                },
+                "recipient": "web",
+                "channel": null
+            },
+            "parent": "0f2a65dc-9dfe-4fd0-9d48-7067d92d9627",
+            "children": [
+                "bc0c35b7-2ca9-4710-a929-0dd6d0ec2d20"
+            ]
+        },
+        "bc0c35b7-2ca9-4710-a929-0dd6d0ec2d20": {
+            "id": "bc0c35b7-2ca9-4710-a929-0dd6d0ec2d20",
+            "message": {
+                "id": "bc0c35b7-2ca9-4710-a929-0dd6d0ec2d20",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054422.4232874,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_model_queries": {
+                        "type": "search_model_queries",
+                        "queries": [
+                            "HSBC Trade25 Apple Store Gift Card terms Hongkong"
+                        ]
+                    },
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "21c5ec89-f4f5-4fc2-a258-5df4b6bba945",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "baaab4ad-2383-4946-82df-3a449ff1f420",
+                    "turn_exchange_id": "5849b79a-de75-497e-bb76-938bed69e1c9"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "baaab4ad-2383-4946-82df-3a449ff1f420",
+            "children": [
+                "82f7b229-e13a-4678-a5b8-aa093df392c7"
+            ]
+        },
+        "82f7b229-e13a-4678-a5b8-aa093df392c7": {
+            "id": "82f7b229-e13a-4678-a5b8-aa093df392c7",
+            "message": {
+                "id": "82f7b229-e13a-4678-a5b8-aa093df392c7",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054422.421688,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "retailbank.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 0
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 1
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/",
+                                    "title": "Stocks Investments",
+                                    "snippet": "Complete 1 stock trade to earn HKD100 reward and enjoy up to HKD1,000 Apple Store Gift Card by 31 December 2025! Terms and conditionsTerms and conditions This ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.facebook.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/posts/hsbcwealth%E5%A5%BDfirm%E4%B8%80trade%E5%8D%B3%E8%B3%BA%E9%AB%98%E9%81%94%E6%B8%AF%E5%B9%A31000%E5%85%83apple-store%E7%A6%AE%E5%93%81%E5%8D%A1%E5%8F%AF%E4%BB%A5%E6%AF%94%E4%BD%A0%E8%B2%B7iphone-16%E6%8A%95%E8%B3%87%E8%B5%B7%E6%AD%A5%E8%A6%81firm%E8%B2%B7%E6%96%B0iphone%E5%98%85%E9%83%A8%E7%BD%B2/849183484077151/",
+                                    "title": "#HSBCWealth【好Firm🤟！一Trade即賺高達港幣 ...",
+                                    "snippet": "即睇點樣賺取獎賞 ： 完成第1單股票交易，即賺港幣500元Apple Store禮品卡 其後5單各賺港幣100元Apple Store禮品卡 10月31日或之前完成6單交易，12月或 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 2
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.facebook.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/videos/-hsbcwealth-%E6%9C%80%E5%BE%8C%E5%8F%AC%E9%9B%8612%E6%9C%8831%E6%97%A5%E5%89%8D%E4%B8%80trade%E5%8D%B3%E8%B3%BA%E9%AB%98%E9%81%94%E6%B8%AF%E5%B9%A31000%E5%85%83apple-store%E7%A6%AE%E5%93%81%E5%8D%A1/877533787541244/",
+                                    "title": "【 #HSBCWealth 最後召集🤟！12月31日前一Trade即賺高達 ...",
+                                    "snippet": "即睇點樣賺取獎賞 ： 完成第1單合資格股票交易，即賺港幣500元Apple Store禮品卡 其後5單合資格股票交易各賺港幣100元Apple Store禮品卡 12月31日或之前 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 6
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.facebook.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "於10 個不同日曆週完成10 筆合資格交易，一共可賺到高達港幣1,000元Apple Store禮品卡 ～ 投資兼換新iPhone，加入滙豐Trade25就可以一Trade兩 得⚡️！ 每3個香港 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 8
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.facebook.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.instagram.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/p/DOdoBDhiKb8/?hl=en",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "... Apple Store gift cards worth up to HKD1,000 ～ Invest smart and upgrade your iPhone — join HSBC Trade25 and enjoy both rewards⚡️! 1 in 3 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.instagram.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/reel/DC8-8rkPoq6/?hl=en",
+                                    "title": "【 #HSBCWealth 最後召集🤟！12月31日前一Trade即賺高達 ...",
+                                    "snippet": "特別加碼！指定之HSBC One 2.0客戶^，只需完成多4單合資格股票交易贏取港幣400 元Apple Store 禮品卡 每3個香港人就有1個以滙豐作為投資夥伴§，立即下載 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 7
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.instagram.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "apps.apple.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://apps.apple.com/hk/app/hsbc-hk-easy-invest/id1261295769?l=en-GB",
+                                    "title": "HSBC HK Easy Invest - App Store - Apple",
+                                    "snippet": "HSBC HK Easy Invest has been specially built for our Hong Kong customers*. It allows you to trade securities instantaneously, and to give you free market ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 5
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "apps.apple.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "yummy.best",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+                                    "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                    "snippet": "30 Nov 2024 — 2025 年12 月31 日前，使用汇丰Trade25 买卖股票，完成10 笔符合条件的股票交易(不限金额)，即可获得HK$ 1000的Apple Gift Card.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 9
+                                    },
+                                    "pub_date": 1732930226.0,
+                                    "attribution": "yummy.best"
+                                }
+                            ]
+                        }
+                    ],
+                    "debug_sonic_thread_id": "thread_692555967f2c8331a27e690f687bfbc9",
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "21c5ec89-f4f5-4fc2-a258-5df4b6bba945",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "bc0c35b7-2ca9-4710-a929-0dd6d0ec2d20",
+                    "turn_exchange_id": "5849b79a-de75-497e-bb76-938bed69e1c9"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "bc0c35b7-2ca9-4710-a929-0dd6d0ec2d20",
+            "children": [
+                "d13ea584-6bfa-49d7-94a1-a5f578a55daf"
+            ]
+        },
+        "d13ea584-6bfa-49d7-94a1-a5f578a55daf": {
+            "id": "d13ea584-6bfa-49d7-94a1-a5f578a55daf",
+            "message": {
+                "id": "d13ea584-6bfa-49d7-94a1-a5f578a55daf",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054423.673458,
+                "update_time": 1764054429.553254,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "以下是 entity[\"organization\", \"The Hongkong and Shanghai Banking Corporation Limited\", 0]（香港）「entity[\"financial_product\", \"HSBC Trade25\", 0]」计划中，关于 Apple Store 礼品卡（“Apple Store Gift Card”）奖励的使用细则整理：  \n\n---\n\n### ✅ 礼品卡类型及额度  \n- 参与活动条件达成后，可获 Apple Store Gift Card，最高可达港币 **HK$1,000**。citeturn0search1turn0search0turn0search9  \n- 例如：加入后、完成 10 个不同“日历周”（calendar weeks）内的合资格股票交易，即可获得 HK$1,000 Apple Store 礼品卡。citeturn0search0turn0search1turn0search9  \n- 每完成一笔或数笔交易可兑换较小额度礼品卡（如 HK$100）直到上限。citeturn0search0turn0search8  \n\n---\n\n### ℹ️ 使用条款与注意事项  \n- 礼品卡由 entity[\"organization\", \"Apple Asia Limited\", 0] 提供，使用受 Apple 的礼品卡条款约束，而银行【并不对礼品卡的使用适用性或质量负责】。citeturn0search0turn0search1  \n- 礼品卡**“没有到期日”**，也就是你兑换后可较为自由地使用。citeturn0search0  \n- 礼品卡不可用于购买 Apple Store 礼品卡、iTunes 礼品卡、iTunes Gift Certificate、Apple 冲印产品（例如苹果相片冲印服务）或用于 iTunes Store 购物。citeturn0search9  \n- 活动必须在指定截止日／条件内完成。例如：至 **2025 年12月31日** 前，完成合资格交易才能获得该礼品卡奖励。citeturn0search1turn0search9  \n- 礼品卡兑换可能受库存或其它限制。若特定金额的礼品卡“已供不应求”，银行有权改以等值奖励替代。citeturn0search0  \n\n---\n\n### 📌 使用建议  \n- 在兑换礼品卡后，建议你尽快查明礼品卡的兑换方式、是否需线上注册、使用范围（如实体 Apple Store 与线上 apple.com/香港区）以及是否可跨地区使用。  \n- 保留兑换凭证（例如电子邮件、兑换券编号）以备后续查询。  \n- 虽然礼品卡无到期日，但仍建议尽快使用，以免苹果公司后续调整礼品卡条款或地区支持。  \n- 确保你完成了活动所要求的「不同日历周」交易条件，并可在银行 App／网页中查阅“合资格交易次数”记录，以确保符合奖励资格。  \n\n---\n\n如果你愿意，我也可以帮你查 **当期活动（2025 年底前）** 的完整“条款与细则（Terms & Conditions）”PDF文档，帮你了解所有细节（例如：哪些股票交易计入、是否含 ETF、是否有最低金额、是否限定新客户等）。你看要不要？"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": true,
+                "weight": 1.0,
+                "metadata": {
+                    "content_references": [
+                        {
+                            "matched_text": "entity[\"organization\", \"The Hongkong and Shanghai Banking Corporation Limited\", 0]",
+                            "start_idx": 4,
+                            "end_idx": 89,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "The Hongkong and Shanghai Banking Corporation Limited",
+                            "prompt_text": "The Hongkong and Shanghai Banking Corporation Limited",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "entity[\"financial_product\", \"HSBC Trade25\", 0]",
+                            "start_idx": 94,
+                            "end_idx": 143,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "HSBC Trade25",
+                            "prompt_text": "HSBC Trade25",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "citeturn0search1turn0search0turn0search9",
+                            "start_idx": 284,
+                            "end_idx": 329,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([汇丰香港](https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [
+                                        {
+                                            "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                            "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                            "attribution": "retailbank.hsbc.com.hk"
+                                        },
+                                        {
+                                            "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                            "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "30 Nov 2024 — 2025 年12 月31 日前，使用汇丰Trade25 买卖股票，完成10 笔符合条件的股票交易(不限金额)，即可获得HK$ 1000的Apple Gift Card.",
+                                            "attribution": "Yummy's Blog"
+                                        }
+                                    ],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 1
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 9
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "汇丰香港"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search0turn0search1turn0search9",
+                            "start_idx": 411,
+                            "end_idx": 456,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [
+                                        {
+                                            "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                            "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                            "attribution": "汇丰香港"
+                                        },
+                                        {
+                                            "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                            "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "30 Nov 2024 — 2025 年12 月31 日前，使用汇丰Trade25 买卖股票，完成10 笔符合条件的股票交易(不限金额)，即可获得HK$ 1000的Apple Gift Card.",
+                                            "attribution": "Yummy's Blog"
+                                        }
+                                    ],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 1
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 9
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search0turn0search8",
+                            "start_idx": 496,
+                            "end_idx": 528,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/",
+                                "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [
+                                        {
+                                            "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                            "url": "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "於10 個不同日曆週完成10 筆合資格交易，一共可賺到高達港幣1,000元Apple Store禮品卡 ～ 投資兼換新iPhone，加入滙豐Trade25就可以一Trade兩 得⚡️！ 每3個香港 ...",
+                                            "attribution": "Facebook"
+                                        }
+                                    ],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 8
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "entity[\"organization\", \"Apple Asia Limited\", 0]",
+                            "start_idx": 563,
+                            "end_idx": 613,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "Apple Asia Limited",
+                            "prompt_text": "Apple Asia Limited",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "citeturn0search0turn0search1",
+                            "start_idx": 659,
+                            "end_idx": 691,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [
+                                        {
+                                            "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                            "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                            "attribution": "汇丰香港"
+                                        }
+                                    ],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 1
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search0",
+                            "start_idx": 727,
+                            "end_idx": 746,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search9",
+                            "start_idx": 854,
+                            "end_idx": 873,
+                            "safe_urls": [
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([Yummy's Blog](https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                    "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com",
+                                    "pub_date": 1732930226.0,
+                                    "snippet": "30 Nov 2024 — 2025 年12 月31 日前，使用汇丰Trade25 买卖股票，完成10 笔符合条件的股票交易(不限金额)，即可获得HK$ 1000的Apple Gift Card.",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 9
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "Yummy's Blog"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search1turn0search9",
+                            "start_idx": 937,
+                            "end_idx": 969,
+                            "safe_urls": [
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+                                "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([汇丰香港](https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Earn up to HKD1,000 Apple Store Gift Card: Join Trade25 and complete 10 HK/US/China A stock transactions in 10 different calendar weeks by 31 December 2025 to ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [
+                                        {
+                                            "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                            "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "30 Nov 2024 — 2025 年12 月31 日前，使用汇丰Trade25 买卖股票，完成10 笔符合条件的股票交易(不限金额)，即可获得HK$ 1000的Apple Gift Card.",
+                                            "attribution": "Yummy's Blog"
+                                        }
+                                    ],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 1
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 9
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "汇丰香港"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search0",
+                            "start_idx": 1020,
+                            "end_idx": 1039,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Complete 10 eligible trades in 10 different calendar weeks to earn a HK$1,000 Apple Store gift card! Simple Requirement* by 31 December. Rewards (HK$ Apple Gift ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": " ",
+                            "start_idx": 1419,
+                            "end_idx": 1419,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "",
+                            "prompt_text": null,
+                            "type": "sources_footnote",
+                            "sources": [
+                                {
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                    "attribution": "汇丰香港"
+                                },
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                },
+                                {
+                                    "title": "完成6 笔股票交易（不限金额）得1000 HKD Apple Gift Card",
+                                    "url": "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com",
+                                    "attribution": "Yummy's Blog"
+                                }
+                            ],
+                            "has_images": false
+                        }
+                    ],
+                    "safe_urls": [
+                        "https://retailbank.hsbc.com.hk/trade25/en/home",
+                        "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                        "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/",
+                        "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/?utm_source=chatgpt.com",
+                        "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                        "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                        "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+                        "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com"
+                    ],
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "facebook.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/posts/hsbcwealth%E5%A5%BDfirm%E4%B8%80trade%E5%8D%B3%E8%B3%BA%E9%AB%98%E9%81%94%E6%B8%AF%E5%B9%A31000%E5%85%83apple-store%E7%A6%AE%E5%93%81%E5%8D%A1%E5%8F%AF%E4%BB%A5%E6%AF%94%E4%BD%A0%E8%B2%B7iphone-16%E6%8A%95%E8%B3%87%E8%B5%B7%E6%AD%A5%E8%A6%81firm%E8%B2%B7%E6%96%B0iphone%E5%98%85%E9%83%A8%E7%BD%B2/849183484077151/?utm_source=chatgpt.com",
+                                    "title": "#HSBCWealth【好Firm🤟！一Trade即賺高達港幣 ...",
+                                    "snippet": "即睇點樣賺取獎賞 ： 完成第1單股票交易，即賺港幣500元Apple Store禮品卡 其後5單各賺港幣100元Apple Store禮品卡 10月31日或之前完成6單交易，12月或 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 2
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "facebook.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/videos/-hsbcwealth-%E6%9C%80%E5%BE%8C%E5%8F%AC%E9%9B%8612%E6%9C%8831%E6%97%A5%E5%89%8D%E4%B8%80trade%E5%8D%B3%E8%B3%BA%E9%AB%98%E9%81%94%E6%B8%AF%E5%B9%A31000%E5%85%83apple-store%E7%A6%AE%E5%93%81%E5%8D%A1/877533787541244/?utm_source=chatgpt.com",
+                                    "title": "【 #HSBCWealth 最後召集🤟！12月31日前一Trade即賺高達 ...",
+                                    "snippet": "即睇點樣賺取獎賞 ： 完成第1單合資格股票交易，即賺港幣500元Apple Store禮品卡 其後5單合資格股票交易各賺港幣100元Apple Store禮品卡 12月31日或之前 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 6
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "facebook.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/?utm_source=chatgpt.com",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "於10 個不同日曆週完成10 筆合資格交易，一共可賺到高達港幣1,000元Apple Store禮品卡 ～ 投資兼換新iPhone，加入滙豐Trade25就可以一Trade兩 得⚡️！ 每3個香港 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 8
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "facebook.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "instagram.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/p/DOdoBDhiKb8/?hl=en&utm_source=chatgpt.com",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "... Apple Store gift cards worth up to HKD1,000 ～ Invest smart and upgrade your iPhone — join HSBC Trade25 and enjoy both rewards⚡️! 1 in 3 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "instagram.com"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/reel/DC8-8rkPoq6/?hl=en&utm_source=chatgpt.com",
+                                    "title": "【 #HSBCWealth 最後召集🤟！12月31日前一Trade即賺高達 ...",
+                                    "snippet": "特別加碼！指定之HSBC One 2.0客戶^，只需完成多4單合資格股票交易贏取港幣400 元Apple Store 禮品卡 每3個香港人就有1個以滙豐作為投資夥伴§，立即下載 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 7
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "instagram.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/?utm_source=chatgpt.com",
+                                    "title": "Stocks Investments",
+                                    "snippet": "Complete 1 stock trade to earn HKD100 reward and enjoy up to HKD1,000 Apple Store Gift Card by 31 December 2025! Terms and conditionsTerms and conditions This ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "apple.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://apps.apple.com/hk/app/hsbc-hk-easy-invest/id1261295769?l=en-GB&utm_source=chatgpt.com",
+                                    "title": "HSBC HK Easy Invest - App Store - Apple",
+                                    "snippet": "HSBC HK Easy Invest has been specially built for our Hong Kong customers*. It allows you to trade securities instantaneously, and to give you free market ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 5
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "apple.com"
+                                }
+                            ]
+                        }
+                    ],
+                    "citations": [],
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "21c5ec89-f4f5-4fc2-a258-5df4b6bba945",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "82f7b229-e13a-4678-a5b8-aa093df392c7",
+                    "turn_exchange_id": "5849b79a-de75-497e-bb76-938bed69e1c9",
+                    "model_switcher_deny": []
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "82f7b229-e13a-4678-a5b8-aa093df392c7",
+            "children": [
+                "4282d3e4-e5d1-4a2d-9c12-d40d0e635d1d"
+            ]
+        },
+        "4282d3e4-e5d1-4a2d-9c12-d40d0e635d1d": {
+            "id": "4282d3e4-e5d1-4a2d-9c12-d40d0e635d1d",
+            "message": {
+                "id": "4282d3e4-e5d1-4a2d-9c12-d40d0e635d1d",
+                "author": {
+                    "role": "user",
+                    "name": null,
+                    "metadata": {}
+                },
+                "create_time": 1764054457.713,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "如果 只做了9笔交易，会只给900吗？"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": null,
+                "weight": 1.0,
+                "metadata": {
+                    "developer_mode_connector_ids": [],
+                    "selected_sources": [],
+                    "selected_github_repos": [],
+                    "serialization_metadata": {
+                        "custom_symbol_offsets": []
+                    },
+                    "request_id": "0711345f-3467-49c7-8b8c-4723d6e60c0b",
+                    "message_source": null,
+                    "turn_exchange_id": "4190d238-2968-4147-9a34-b27c0e6364e6"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "d13ea584-6bfa-49d7-94a1-a5f578a55daf",
+            "children": [
+                "978fc6f1-08fc-4d2c-acb8-90d4b3a1deb3"
+            ]
+        },
+        "978fc6f1-08fc-4d2c-acb8-90d4b3a1deb3": {
+            "id": "978fc6f1-08fc-4d2c-acb8-90d4b3a1deb3",
+            "message": {
+                "id": "978fc6f1-08fc-4d2c-acb8-90d4b3a1deb3",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054458.7351158,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_model_queries": {
+                        "type": "search_model_queries",
+                        "queries": [
+                            "HSBC Trade25 Hong Kong terms and conditions"
+                        ]
+                    },
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "0711345f-3467-49c7-8b8c-4723d6e60c0b",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "4282d3e4-e5d1-4a2d-9c12-d40d0e635d1d",
+                    "turn_exchange_id": "4190d238-2968-4147-9a34-b27c0e6364e6"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "4282d3e4-e5d1-4a2d-9c12-d40d0e635d1d",
+            "children": [
+                "a466872f-02f0-45d7-a56f-52bd136dfebb"
+            ]
+        },
+        "a466872f-02f0-45d7-a56f-52bd136dfebb": {
+            "id": "a466872f-02f0-45d7-a56f-52bd136dfebb",
+            "message": {
+                "id": "a466872f-02f0-45d7-a56f-52bd136dfebb",
+                "author": {
+                    "role": "tool",
+                    "name": "web.run",
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054458.7336564,
+                "update_time": null,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        ""
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": false,
+                "weight": 1.0,
+                "metadata": {
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "snippet": "Refer to the product factsheets for Hong Kong and US stocks, and China A shares, and the HSBC Trade25 terms and conditions on our website for more details.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 0
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/",
+                                    "title": "Stocks Investments",
+                                    "snippet": "(1) Join Trade25 to enjoy lifetime $0 commission and $0 platform fees trading US, HK and China A stocks. Complete 1 stock trade to earn HKD100 reward and enjoy ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 6
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "retailbank.hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf",
+                                    "title": "2022_08_HSBC One U Student Investment ...",
+                                    "snippet": "These Promotional Terms and Conditions are governed by and construed in accordance with the laws of Hong Kong. 17. If there is any discrepancy between the ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 1
+                                    },
+                                    "pub_date": 1664768439.0,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "snippet": "Customers aged 26 to 35 can join HSBC Trade25. For details of the terms and conditions of the age extension offer, please visit here. 'Lifetime $0 ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 2
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "fundselectorasia.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://fundselectorasia.com/hsbc-pursues-asia-millennials/",
+                                    "title": "HSBC pursues Asia millennials",
+                                    "snippet": "6 Oct 2021 — HSBC Trade25 is a commission-free stock trading programme designed for millennial traders aged 18 to 25. For HK$25 ($3.2) a month, customers can ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "fundselectorasia.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.hubbis.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hubbis.com/news/hsbc-enhances-digital-investment-solutions-to-empower-millennials-in-wealth-management",
+                                    "title": "HSBC enhances digital investment solutions to empower ...",
+                                    "snippet": "6 Oct 2021 — HSBC introduced today Trade25, a new commission-free stock trading programme designed to give millennial traders aged 18 to 25 investment ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.hubbis.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "carbonaccountingfinancials.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://carbonaccountingfinancials.com/files/institutions_downloads/hsbc-annual-report-and-accounts-2021.pdf",
+                                    "title": "HSBC Holdings plc Annual Report and Accounts 2021",
+                                    "snippet": "22 Feb 2022 — For our financial targets, we define medium term as three to four years and long term as five to six years, commencing 1 January 2020. Further ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 5
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "carbonaccountingfinancials.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.instagram.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/p/DOdoBDhiKb8/?hl=en",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "Terms and conditions: https://grp.hsbc/25PEGCIGDRFT ^Did not hold and make any investment or life insurance transactions with HSBC in the past ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 7
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.instagram.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.scmp.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.scmp.com/presented/business/banking-finance/topics/smart-banking-millennials/article/3206222/traditional-bank-stands-gain-it-embraces-digital-needs-young-millennials-disrupting-industry",
+                                    "title": "Traditional bank stands to gain as it embraces the digital ...",
+                                    "snippet": "16 Jan 2023 — Also part of the package, HSBC Trade25 is a commission-free trading platform for amounts up to HK$250,000 per month for young millennials aged ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 8
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.scmp.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "www.facebook.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/photo/?fbid=646900504305451&set=pcb.646632127665622",
+                                    "title": "HSBC - 【加入滙豐Trade25，盡享$0佣 ...",
+                                    "snippet": "https://grp. hsbc/TPCXCAE Offers are subject to terms and conditions. To borrow or not to borrow? Borrow only if you can repay! This promotion is valid for HSBC ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 9
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "www.facebook.com"
+                                }
+                            ]
+                        }
+                    ],
+                    "debug_sonic_thread_id": "thread_692555bac71c83319dcce38243a81725",
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "0711345f-3467-49c7-8b8c-4723d6e60c0b",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "978fc6f1-08fc-4d2c-acb8-90d4b3a1deb3",
+                    "turn_exchange_id": "4190d238-2968-4147-9a34-b27c0e6364e6"
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "978fc6f1-08fc-4d2c-acb8-90d4b3a1deb3",
+            "children": [
+                "57aca0ab-7e05-4d89-86d9-5a435f30a0c6"
+            ]
+        },
+        "57aca0ab-7e05-4d89-86d9-5a435f30a0c6": {
+            "id": "57aca0ab-7e05-4d89-86d9-5a435f30a0c6",
+            "message": {
+                "id": "57aca0ab-7e05-4d89-86d9-5a435f30a0c6",
+                "author": {
+                    "role": "assistant",
+                    "name": null,
+                    "metadata": {
+                        "sonicberry_model_id": "current_sonicberry_paid",
+                        "real_author": "tool:web",
+                        "source": "sonic_tool"
+                    }
+                },
+                "create_time": 1764054459.936392,
+                "update_time": 1764054463.311581,
+                "content": {
+                    "content_type": "text",
+                    "parts": [
+                        "根据 entity[\"organization\", \"The Hongkong and Shanghai Banking Corporation Limited\", 0]（香港）官网“entity[\"financial_product\", \"HSBC Trade25\", 0]”计划中有关礼品卡奖励条款的说明：\n\n> 「完成 10 笔合资格交易（且每笔交易必须位于不同日历周）即可获 HK$1,000 Apple Store Gift Card」citeturn0search2turn0search0  \n> 同时网页亦列明：  \n> - 完成第 1 笔交易即可获 HK$100  \n> - 第 2 笔、第 3 笔 … 第 9 笔每笔再获 HK$100  \n> - 第 10 笔交易完成后可累积至 HK$1,000。citeturn0search2\n\n所以，如果你只做了 **9 笔合资格交易**，理论上根据该页面的说明，你可累积至 **HK$900** 的礼品卡奖励（每笔$100×9笔）→ 但 **尚未达到第 10 笔**，因此 **不能达到最大 HK$1,000**。  \n\n不过，需要确认细则中是否有「必须完成 10 笔才能领取」的门槛或「分阶段奖励」机制是否确实被银行正式承认。因为有些促销条款虽然网页写得“每笔$100”，但在实际 T&Cs 中可能仍要求完成全部 10 笔才能领取任何奖励。  \n\n建议你：  \n1. 查阅该活动的最新「条款与细则（Terms & Conditions）」PDF，看是否明确指出“9 笔即可 HK$900”或“必须满 10 笔才能获奖”。  \n2. 联系 HSBC 客服，说明你的交易次数已达 9 笔，询问是否有资格按比例领取 HK$900 的礼品卡。  \n3. 保留你每笔交易的「所在日历周」记录，因为不同周这一要求很关键。  \n\n如你愿意，我可以帮你查找该活动最新版本 T&Cs PDF 的具体条文，帮你确认这一点。要我帮忙吗？"
+                    ]
+                },
+                "status": "finished_successfully",
+                "end_turn": true,
+                "weight": 1.0,
+                "metadata": {
+                    "content_references": [
+                        {
+                            "matched_text": "entity[\"organization\", \"The Hongkong and Shanghai Banking Corporation Limited\", 0]",
+                            "start_idx": 3,
+                            "end_idx": 88,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "The Hongkong and Shanghai Banking Corporation Limited",
+                            "prompt_text": "The Hongkong and Shanghai Banking Corporation Limited",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "entity[\"financial_product\", \"HSBC Trade25\", 0]",
+                            "start_idx": 95,
+                            "end_idx": 144,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "HSBC Trade25",
+                            "prompt_text": "HSBC Trade25",
+                            "type": "alt_text"
+                        },
+                        {
+                            "matched_text": "citeturn0search2turn0search0",
+                            "start_idx": 229,
+                            "end_idx": 261,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                                "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Customers aged 26 to 35 can join HSBC Trade25. For details of the terms and conditions of the age extension offer, please visit here. 'Lifetime $0 ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [
+                                        {
+                                            "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                            "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                            "pub_date": null,
+                                            "snippet": "Refer to the product factsheets for Hong Kong and US stocks, and China A shares, and the HSBC Trade25 terms and conditions on our website for more details.",
+                                            "attribution": "汇丰香港"
+                                        }
+                                    ],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 2
+                                        },
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 0
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": "citeturn0search2",
+                            "start_idx": 369,
+                            "end_idx": 388,
+                            "safe_urls": [
+                                "https://retailbank.hsbc.com.hk/trade25/en/home",
+                                "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com"
+                            ],
+                            "refs": [],
+                            "alt": "([retailbank.hsbc.com.hk](https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com))",
+                            "prompt_text": null,
+                            "type": "grouped_webpages",
+                            "items": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "pub_date": null,
+                                    "snippet": "Customers aged 26 to 35 can join HSBC Trade25. For details of the terms and conditions of the age extension offer, please visit here. 'Lifetime $0 ...",
+                                    "attribution_segments": null,
+                                    "supporting_websites": [],
+                                    "refs": [
+                                        {
+                                            "turn_index": 0,
+                                            "ref_type": "search",
+                                            "ref_index": 2
+                                        }
+                                    ],
+                                    "hue": null,
+                                    "attributions": null,
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "fallback_items": null,
+                            "status": "done",
+                            "error": null,
+                            "style": null
+                        },
+                        {
+                            "matched_text": " ",
+                            "start_idx": 852,
+                            "end_idx": 852,
+                            "safe_urls": [],
+                            "refs": [],
+                            "alt": "",
+                            "prompt_text": null,
+                            "type": "sources_footnote",
+                            "sources": [
+                                {
+                                    "title": "Enjoy $0 commission with Trade25 and earn up to HK ...",
+                                    "url": "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                                    "attribution": "retailbank.hsbc.com.hk"
+                                }
+                            ],
+                            "has_images": false
+                        }
+                    ],
+                    "safe_urls": [
+                        "https://retailbank.hsbc.com.hk/trade25/en/home",
+                        "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+                        "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+                        "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com"
+                    ],
+                    "search_result_groups": [
+                        {
+                            "type": "search_result_group",
+                            "domain": "hsbc.com.hk",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+                                    "title": "HSBC Trade25: Your ticket to $0 commission trading",
+                                    "snippet": "Refer to the product factsheets for Hong Kong and US stocks, and China A shares, and the HSBC Trade25 terms and conditions on our website for more details.",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 0
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf?utm_source=chatgpt.com",
+                                    "title": "2022_08_HSBC One U Student Investment ...",
+                                    "snippet": "These Promotional Terms and Conditions are governed by and construed in accordance with the laws of Hong Kong. 17. If there is any discrepancy between the ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 1
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                },
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hsbc.com.hk/investments/products/stocks/?utm_source=chatgpt.com",
+                                    "title": "Stocks Investments",
+                                    "snippet": "(1) Join Trade25 to enjoy lifetime $0 commission and $0 platform fees trading US, HK and China A stocks. Complete 1 stock trade to earn HKD100 reward and enjoy ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 6
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hsbc.com.hk"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "fundselectorasia.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://fundselectorasia.com/hsbc-pursues-asia-millennials/?utm_source=chatgpt.com",
+                                    "title": "HSBC pursues Asia millennials",
+                                    "snippet": "6 Oct 2021 — HSBC Trade25 is a commission-free stock trading programme designed for millennial traders aged 18 to 25. For HK$25 ($3.2) a month, customers can ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 3
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "fundselectorasia.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "hubbis.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.hubbis.com/news/hsbc-enhances-digital-investment-solutions-to-empower-millennials-in-wealth-management?utm_source=chatgpt.com",
+                                    "title": "HSBC enhances digital investment solutions to empower ...",
+                                    "snippet": "6 Oct 2021 — HSBC introduced today Trade25, a new commission-free stock trading programme designed to give millennial traders aged 18 to 25 investment ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 4
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "hubbis.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "carbonaccountingfinancials.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://carbonaccountingfinancials.com/files/institutions_downloads/hsbc-annual-report-and-accounts-2021.pdf?utm_source=chatgpt.com",
+                                    "title": "HSBC Holdings plc Annual Report and Accounts 2021",
+                                    "snippet": "22 Feb 2022 — For our financial targets, we define medium term as three to four years and long term as five to six years, commencing 1 January 2020. Further ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 5
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "carbonaccountingfinancials.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "instagram.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.instagram.com/p/DOdoBDhiKb8/?hl=en&utm_source=chatgpt.com",
+                                    "title": "【#HSBCWealth 加入滙豐Trade25 人人都可以一Trade兩得 ...",
+                                    "snippet": "Terms and conditions: https://grp.hsbc/25PEGCIGDRFT ^Did not hold and make any investment or life insurance transactions with HSBC in the past ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 7
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "instagram.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "scmp.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.scmp.com/presented/business/banking-finance/topics/smart-banking-millennials/article/3206222/traditional-bank-stands-gain-it-embraces-digital-needs-young-millennials-disrupting-industry?utm_source=chatgpt.com",
+                                    "title": "Traditional bank stands to gain as it embraces the digital ...",
+                                    "snippet": "16 Jan 2023 — Also part of the package, HSBC Trade25 is a commission-free trading platform for amounts up to HK$250,000 per month for young millennials aged ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 8
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "scmp.com"
+                                }
+                            ]
+                        },
+                        {
+                            "type": "search_result_group",
+                            "domain": "facebook.com",
+                            "entries": [
+                                {
+                                    "type": "search_result",
+                                    "url": "https://www.facebook.com/photo/?fbid=646900504305451&set=pcb.646632127665622&utm_source=chatgpt.com",
+                                    "title": "HSBC - 【加入滙豐Trade25，盡享$0佣 ...",
+                                    "snippet": "https://grp. hsbc/TPCXCAE Offers are subject to terms and conditions. To borrow or not to borrow? Borrow only if you can repay! This promotion is valid for HSBC ...",
+                                    "ref_id": {
+                                        "turn_index": 0,
+                                        "ref_type": "search",
+                                        "ref_index": 9
+                                    },
+                                    "pub_date": null,
+                                    "attribution": "facebook.com"
+                                }
+                            ]
+                        }
+                    ],
+                    "citations": [],
+                    "search_turns_count": 1,
+                    "search_source": "composer_auto",
+                    "client_reported_search_source": "composer_auto",
+                    "request_id": "0711345f-3467-49c7-8b8c-4723d6e60c0b",
+                    "message_type": "next",
+                    "model_slug": "gpt-5-1-instant",
+                    "default_model_slug": "gpt-5-1-instant",
+                    "parent_id": "a466872f-02f0-45d7-a56f-52bd136dfebb",
+                    "turn_exchange_id": "4190d238-2968-4147-9a34-b27c0e6364e6",
+                    "model_switcher_deny": []
+                },
+                "recipient": "all",
+                "channel": null
+            },
+            "parent": "a466872f-02f0-45d7-a56f-52bd136dfebb",
+            "children": []
+        }
+    },
+    "moderation_results": [],
+    "current_node": "57aca0ab-7e05-4d89-86d9-5a435f30a0c6",
+    "plugin_ids": null,
+    "conversation_id": "6925554a-2e3c-8324-acbe-4d5ffb5e3589",
+    "conversation_template_id": null,
+    "gizmo_id": null,
+    "gizmo_type": null,
+    "is_archived": false,
+    "is_starred": null,
+    "safe_urls": [
+        "https://docs.google.com/document/d/1WF0NB9fnxhDPEi_arGSp18Kev9KXdoX-IePIE8KJgCQ/edit?tab=t.0#heading=h.e3mmf6q9l82j",
+        "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf?utm_source=chatgpt.com",
+        "https://docs.google.com/spreadsheets/d/1HmkfBJulhu50S6L9wuRsaVC9VL1LpbxpmgRzn33SxsQ/edit?gid=676408861#gid=676408861",
+        "https://retailbank.hsbc.com.hk/media/7659/2022_u-students-campaign_trade25_en_pdf_v1.pdf",
+        "https://www.notion.so/9162f50b62b080124ca4db47ba6f2e54",
+        "https://retailbank.hsbc.com.hk/trade25/en/home?utm_source=chatgpt.com",
+        "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/?utm_source=chatgpt.com",
+        "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/",
+        "https://yummy.best/get-an-apple-store-gift-card-from-hsbc-using-the-trade25-promotion/?utm_source=chatgpt.com",
+        "https://www.hsbc.com.hk/investments/products/stocks/",
+        "https://www.hsbc.com.hk/investments/products/stocks/trade25/",
+        "https://retailbank.hsbc.com.hk/trade25/en/home",
+        "https://docs.google.com/presentation/d/11n0Wjuik6jHQFe-gRLV2LOg7CQHGf-CM_JX0Y-Io_RI/edit#slide=id.g2ef8699e0eb_48_36",
+        "https://docs.google.com/document/d/1WF0NB9fnxhDPEi_arGSp18Kev9KXdoX-IePIE8KJgCQ",
+        "https://www.hsbc.com.hk/investments/products/stocks/trade25/?utm_source=chatgpt.com",
+        "https://www.facebook.com/HSBCHK/posts/hsbcwealth-%E5%8A%A0%E5%85%A5%E6%BB%99%E8%B1%90trade25-%E4%BA%BA%E4%BA%BA%E9%83%BD%E5%8F%AF%E4%BB%A5%E4%B8%80trade%E5%85%A9%E5%BE%970%E4%BD%A3%E6%8A%95%E8%B3%87%E8%BC%95%E9%AC%86%E6%8F%9Biphone%E4%B8%80%E6%A8%A3%E5%8A%A0%E5%85%A5%E5%B0%88%E7%82%BA18%E8%87%B335%E6%AD%B2%E5%98%85%E8%82%A1%E7%A5%A8%E6%8A%95%E8%B3%87%E8%80%85%E8%80%8C%E8%A8%AD%E5%98%85%E6%BB%99%E8%B1%90trade25%E8%B2%B7/1118749860453844/",
+        "https://www.openai.com",
+        "https://www.hsbc.com.hk/investments/products/stocks/?utm_source=chatgpt.com"
+    ],
+    "blocked_urls": [],
+    "default_model_slug": "gpt-5-1-instant",
+    "conversation_origin": null,
+    "is_read_only": null,
+    "voice": null,
+    "async_status": null,
+    "disabled_tool_ids": [],
+    "is_do_not_remember": false,
+    "memory_scope": "global_enabled",
+    "context_scopes": null,
+    "sugar_item_id": null,
+    "sugar_item_visible": false,
+    "is_study_mode": false,
+    "owner": null
+}

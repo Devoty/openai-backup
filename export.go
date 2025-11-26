@@ -3,11 +3,15 @@ package main
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"os"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
 )
+
+var structuredTagPattern = regexp.MustCompile(".*?")
 
 func buildExportConversation(meta conversationMeta, detail *conversationDetail) exportConversation {
 	// 将接口返回的 mapping 规整为 Markdown 友好的结构。
@@ -24,6 +28,9 @@ func buildExportConversation(meta conversationMeta, detail *conversationDetail) 
 		}
 		msg := node.Message
 		text := renderMessageContent(msg.Content)
+		if shouldSkipProcessMessage(msg, text) {
+			continue
+		}
 		role := chooseRole(msg)
 		normalized := normalizeContent(text)
 		if normalized == "" || strings.TrimSpace(normalized) == "\"\"" {
@@ -37,6 +44,7 @@ func buildExportConversation(meta conversationMeta, detail *conversationDetail) 
 			CreateTime: msg.CreateTime.Float64(),
 			UpdateTime: msg.UpdateTime.Float64(),
 			Text:       normalized,
+			References: gatherReferences(msg.Metadata),
 		})
 	}
 
@@ -50,6 +58,49 @@ func buildExportConversation(meta conversationMeta, detail *conversationDetail) 
 	})
 
 	return export
+}
+
+func shouldSkipProcessMessage(msg *chatMessage, rendered string) bool {
+	role := strings.ToLower(chooseRole(msg))
+	trimmed := strings.TrimSpace(rendered)
+
+	if strings.EqualFold(role, "tool") {
+		return true
+	}
+
+	var meta struct {
+		IsHidden bool   `json:"is_visually_hidden_from_conversation"`
+		Command  string `json:"command"`
+	}
+	if len(msg.Metadata) > 0 {
+		_ = json.Unmarshal(msg.Metadata, &meta)
+	}
+	if meta.IsHidden && role == "system" {
+		return true
+	}
+	if role == "system" && strings.EqualFold(meta.Command, "prompt") {
+		return true
+	}
+
+	if msg.Content.ContentType == "code" && strings.EqualFold(role, "assistant") {
+		if msg.Recipient != "" && !strings.EqualFold(msg.Recipient, "all") {
+			return true
+		}
+		lower := strings.ToLower(trimmed)
+		if strings.HasPrefix(lower, "search(") || strings.Contains(lower, " search(") {
+			return true
+		}
+		if len(msg.Metadata) > 0 {
+			var metaMap map[string]any
+			if err := json.Unmarshal(msg.Metadata, &metaMap); err == nil {
+				if _, ok := metaMap["sonic_classification_result"]; ok {
+					return true
+				}
+			}
+		}
+	}
+
+	return false
 }
 
 func renderConversationMarkdown(conv exportConversation, timezone string) string {
@@ -74,7 +125,24 @@ func renderConversationMarkdown(conv exportConversation, timezone string) string
 		}
 		b.WriteString(fmt.Sprintf("## %d. %s · %s\n\n", idx+1, label, formatTimestamp(msg.CreateTime, loc)))
 		b.WriteString(blockquote(msg.Role, msg.Text))
-		b.WriteString("\n")
+		if len(msg.References) > 0 {
+			b.WriteString("引用:\n")
+			for _, ref := range msg.References {
+				title := strings.TrimSpace(ref.Title)
+				if title == "" {
+					title = ref.URL
+				}
+				source := strings.TrimSpace(ref.Source)
+				if source != "" {
+					b.WriteString(fmt.Sprintf("- [%s](%s) · %s\n", title, ref.URL, source))
+				} else {
+					b.WriteString(fmt.Sprintf("- [%s](%s)\n", title, ref.URL))
+				}
+			}
+			b.WriteString("\n")
+		} else {
+			b.WriteString("\n")
+		}
 	}
 
 	return b.String()
@@ -159,7 +227,7 @@ func formatTimestamp(value float64, loc *time.Location) string {
 	sec := int64(value)
 	nsec := int64((value - float64(sec)) * 1e9)
 	t := time.Unix(sec, nsec).In(loc)
-	return t.Format("2006-01-02 15:04:05 MST")
+	return t.Format("2006-01-02 15:04:05")
 }
 
 func resolveLocation(name string) *time.Location {
@@ -190,7 +258,97 @@ func normalizeContent(input string) string {
 	clean = strings.ReplaceAll(clean, "\u200B", "")
 	clean = strings.ReplaceAll(clean, "\uFEFF", "")
 	clean = strings.TrimSpace(clean)
+	clean = structuredTagPattern.ReplaceAllString(clean, "")
 	return clean
+}
+
+type referenceLink struct {
+	Title  string `json:"title"`
+	URL    string `json:"url"`
+	Source string `json:"source"`
+}
+
+func gatherReferences(raw json.RawMessage) []referenceLink {
+	if len(raw) == 0 {
+		return nil
+	}
+	var meta messageMetadata
+	if err := json.Unmarshal(raw, &meta); err != nil {
+		return nil
+	}
+
+	seen := make(map[string]referenceLink)
+
+	add := func(rawURL, title, source string) {
+		u := strings.TrimSpace(rawURL)
+		if u == "" {
+			return
+		}
+		if _, ok := seen[u]; ok {
+			return
+		}
+		if title = strings.TrimSpace(title); title == "" {
+			title = fallbackTitle(u)
+		}
+		if source = strings.TrimSpace(source); source == "" {
+			source = hostFromURL(u)
+		}
+		seen[u] = referenceLink{Title: title, URL: u, Source: source}
+	}
+
+	for _, ref := range meta.ContentReferences {
+		for _, item := range ref.Items {
+			add(item.URL, item.Title, item.Attribution)
+		}
+		for _, rawURL := range ref.SafeURLs {
+			add(rawURL, "", ref.Type)
+		}
+	}
+
+	for _, group := range meta.SearchGroups {
+		for _, entry := range group.Entries {
+			source := entry.Attribution
+			if source == "" {
+				source = group.Domain
+			}
+			add(entry.URL, entry.Title, source)
+		}
+	}
+
+	for _, c := range meta.Citations {
+		add(c.URL, c.Title, c.Attribution)
+	}
+
+	if len(seen) == 0 {
+		return nil
+	}
+
+	refs := make([]referenceLink, 0, len(seen))
+	for _, item := range seen {
+		refs = append(refs, item)
+	}
+	sort.Slice(refs, func(i, j int) bool {
+		if refs[i].Source == refs[j].Source {
+			return refs[i].Title < refs[j].Title
+		}
+		return refs[i].Source < refs[j].Source
+	})
+	return refs
+}
+
+func fallbackTitle(rawURL string) string {
+	if host := hostFromURL(rawURL); host != "" {
+		return host
+	}
+	return rawURL
+}
+
+func hostFromURL(rawURL string) string {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return ""
+	}
+	return parsed.Host
 }
 
 func firstNonEmpty(values ...string) string {

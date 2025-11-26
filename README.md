@@ -1,6 +1,6 @@
 # openai-backup
 
-`openai-backup` 用于从 ChatGPT 导出对话，并同步到 Anytype / Notion，支持 CLI 与内置 Web 界面两种模式。
+`openai-backup` 用于从 ChatGPT 导出对话，并同步到 Anytype / Notion，提供内置 Web 界面完成配置、预览与导入。
 
 - **架构说明**：详见 `docs/ARCHITECTURE.md`，涵盖后端模块划分、数据流、前端结构。  
 - **构建与运行**：详见 `docs/BUILD_AND_RUN.md`，提供脚本与常用命令。
@@ -21,20 +21,9 @@ export CHATGPT_BEARER_TOKEN="sk-..."
 
 服务会在 `config/app.db` 持久化配置（SQLite），可直接备份或迁移。  
 
-更多 CLI 参数、目标平台配置说明请参考 `go run main.go --help` 与 `constants.go`。  
+更多参数与目标平台配置说明请参考 Web 配置页和 `constants.go`。  
 
-## 配置文件
+## 配置存储
 
-- CLI 模式会优先加载配置文件（JSON），默认路径遵循系统约定：`macOS -> ~/Library/Application Support/openai-backup/config.json`、`Windows -> %APPDATA%\openai-backup\config.json`、`Linux -> ~/.config/openai-backup/config.json`。若目录不存在将被忽略。  
-- 可通过 `--config` 指定文件或目录，例如 `--config ~/my-config` 将自动查找 `~/my-config/config.json`。命令行参数始终优先生效，其次是配置文件，再回退到环境变量与内置默认值。  
-- 示例：
-
-```json
-{
-  "token": "sk-xxx",
-  "export_target": "notion",
-  "notion_parent_id": "xxxxxxxxxxxxxxxxxxxx",
-  "page_size": 50,
-  "include_archived": true
-}
-```
+- Web 模式下的配置保存在 `config/app.db`（SQLite），可直接备份或迁移。  
+- 也可通过环境变量（如 `CHATGPT_BEARER_TOKEN`、`ANYTYPE_TOKEN`、`NOTION_TOKEN` 等）或启动参数（如 `--listen`、`--base-url`）提供默认值，保存后写入 SQLite。  

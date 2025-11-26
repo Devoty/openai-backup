@@ -196,7 +196,7 @@ func runWebServer(ctx context.Context, cfg *cliConfig) error {
 
 func newWebServer(cfg *cliConfig) (*webServer, error) {
 	cfgCopy := *cfg
-	//ctx := context.Background()
+	ctx := context.Background()
 
 	cfgCopy.ExportTarget = normalizeExportTarget(cfgCopy.ExportTarget)
 	cfgCopy.Order = normalizeOrder(cfgCopy.Order)
@@ -211,24 +211,25 @@ func newWebServer(cfg *cliConfig) (*webServer, error) {
 	}
 	loc := resolveLocation(cfgCopy.OutputTimezone)
 
-	//store, err := newConfigStore(cfgCopy.ConfigDBPath)
-	//if err != nil {
-	//	return nil, err
-	//}
+	store, err := Init(cfgCopy.ConfigDBPath)
+	if err != nil {
+		return nil, fmt.Errorf("初始化配置存储失败: %w", err)
+	}
 
 	app := &webServer{
-		cfg:      &cfgCopy,
-		location: loc,
-		//store:       store,
+		cfg:         &cfgCopy,
+		location:    loc,
+		store:       store,
 		pageCache:   make(map[convPageKey]conversationPageCacheEntry),
 		detailCache: make(map[string]detailCacheEntry),
 	}
 
-	//if payload, err := store.LoadConfig(ctx); err == nil {
-	//	applyConfigPayload(app.cfg, payload)
-	//} else if !errors.Is(err, errConfigNotFound) {
-	//	return nil, fmt.Errorf("加载持久化配置失败: %w", err)
-	//}
+	if payload, err := store.LoadConfig(ctx); err == nil {
+		applyConfigPayload(app.cfg, payload)
+	} else if !errors.Is(err, errConfigNotFound) {
+		store.Close()
+		return nil, fmt.Errorf("加载持久化配置失败: %w", err)
+	}
 
 	return app, nil
 }
@@ -576,7 +577,7 @@ func (s *webServer) prepareConfigExport() (ConfigPayload, error) {
 
 func clampPageSize(value int) int {
 	if value <= 0 {
-		value = 20
+		value = defaultPageSize
 	}
 	if value > 100 {
 		value = 100
@@ -692,10 +693,21 @@ func (s *webServer) handleConversationDetail(w http.ResponseWriter, r *http.Requ
 	}
 	resp.Messages = make([]apiMessage, 0, len(conv.Messages))
 	for _, msg := range conv.Messages {
+		var refs []apiReference
+		if len(msg.References) > 0 {
+			for _, ref := range msg.References {
+				refs = append(refs, apiReference{
+					Title:  ref.Title,
+					URL:    ref.URL,
+					Source: ref.Source,
+				})
+			}
+		}
 		resp.Messages = append(resp.Messages, apiMessage{
-			Role:      msg.Role,
-			Timestamp: s.formatMessageTimestamp(msg),
-			Text:      msg.Text,
+			Role:       msg.Role,
+			Timestamp:  s.formatMessageTimestamp(msg),
+			Text:       msg.Text,
+			References: refs,
 		})
 	}
 	writeJSON(w, http.StatusOK, resp)
@@ -787,6 +799,7 @@ func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if syncErr != nil {
+		logInfo("导入 %s 失败: %v", targetLabel, syncErr)
 		writeError(w, http.StatusBadGateway, fmt.Sprintf("导入 %s 失败: %v", targetLabel, syncErr))
 		return
 	}
@@ -1067,9 +1080,10 @@ type apiConversationItem struct {
 }
 
 type apiMessage struct {
-	Role      string `json:"role"`
-	Timestamp string `json:"timestamp"`
-	Text      string `json:"text"`
+	Role       string         `json:"role"`
+	Timestamp  string         `json:"timestamp"`
+	Text       string         `json:"text"`
+	References []apiReference `json:"references,omitempty"`
 }
 
 type apiConversationDetail struct {
@@ -1078,6 +1092,12 @@ type apiConversationDetail struct {
 	CreateTime string       `json:"create_time"`
 	UpdateTime string       `json:"update_time"`
 	Messages   []apiMessage `json:"messages"`
+}
+
+type apiReference struct {
+	Title  string `json:"title"`
+	URL    string `json:"url"`
+	Source string `json:"source"`
 }
 
 type importRequest struct {

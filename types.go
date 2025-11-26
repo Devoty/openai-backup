@@ -99,6 +99,43 @@ type chatMessage struct {
 	Attachments json.RawMessage `json:"attachments"`
 }
 
+type messageMetadata struct {
+	ContentReferences []contentReference  `json:"content_references"`
+	SearchGroups      []searchResultGroup `json:"search_result_groups"`
+	Citations         []citationRef       `json:"citations"`
+}
+
+type contentReference struct {
+	SafeURLs []string       `json:"safe_urls"`
+	Items    []contentEntry `json:"items"`
+	Type     string         `json:"type"`
+}
+
+type contentEntry struct {
+	Title       string `json:"title"`
+	URL         string `json:"url"`
+	Snippet     string `json:"snippet"`
+	Attribution string `json:"attribution"`
+}
+
+type searchResultGroup struct {
+	Domain  string        `json:"domain"`
+	Entries []searchEntry `json:"entries"`
+}
+
+type searchEntry struct {
+	URL         string `json:"url"`
+	Title       string `json:"title"`
+	Snippet     string `json:"snippet"`
+	Attribution string `json:"attribution"`
+}
+
+type citationRef struct {
+	Title       string `json:"title"`
+	URL         string `json:"url"`
+	Attribution string `json:"attribution"`
+}
+
 type messageAuthor struct {
 	Role string `json:"role"`
 	Name string `json:"name"`
@@ -115,6 +152,7 @@ type exportMessage struct {
 	CreateTime float64
 	UpdateTime float64
 	Text       string
+	References []referenceLink
 }
 
 type exportConversation struct {

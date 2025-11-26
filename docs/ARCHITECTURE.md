@@ -10,7 +10,7 @@ openai-backup/
 ├─ client.go          # ChatGPT 会话列表/详情/删除接口封装
 ├─ export.go          # 会话内容归一化、Markdown 渲染等导出工具
 ├─ logger.go          # 日志初始化与辅助函数
-├─ main.go            # CLI 入口，按参数选择导出模式或启动 Web
+├─ main.go            # 应用入口，加载配置后启动 Web
 ├─ notion.go          # Notion API 客户端与同步逻辑
 ├─ server.go          # Web 服务端路由、配置管理、缓存、持久化调度
 ├─ store.go           # SQLite 持久化与加解密
@@ -21,19 +21,11 @@ openai-backup/
 
 ## 运行模式
 
-项目以同一套 Go 代码支持两种模式：
-
-1. **CLI 导出**  
-   - `main.go` 读取命令行参数与环境变量，构造 `cliConfig`。  
-   - 调用 `fetchAllConversations`、`fetchConversationDetail` 拉取 ChatGPT 对话。  
-   - 使用 `buildExportConversation` 归一化消息，再通过 `syncConversationsToAnytype` 或 `syncConversationsToNotion` 输出到目标平台。
-
-2. **Web 服务**  
-   - `main.go --serve` 进入 `runWebServer`，暴露 REST API、前端静态资源并初始化配置存储。  
-   - `server.go` 协调配置加载/保存、缓存 ChatGPT 列表/详情、触发导入任务。  
-   - 前端 `web/` 目录构建出的静态页面由 `server.go` 的 `serveIndex` 提供。
-
-两种模式共享同一套 `cliConfig` 与 HTTP 客户端封装。
+项目以 Web 服务模式运行：  
+- `main.go` 启动 Web Server，暴露 REST API、前端静态资源并初始化配置存储。  
+- `server.go` 协调配置加载/保存、缓存 ChatGPT 列表/详情、触发导入任务。  
+- 前端 `web/` 目录构建出的静态页面由 `server.go` 的 `serveIndex` 提供。  
+- `cliConfig` 作为 Web 配置载体，同时用于环境变量/启动参数的默认值收敛。
 
 ## 后端模块拆解
 
@@ -50,7 +42,7 @@ openai-backup/
   - `buildExportConversation` 抽取 ChatGPT 消息树，过滤空节点，按时间排序。  
   - `renderConversationMarkdown`/`renderMessageContent` 负责 Markdown 化消息文本。  
 - **`anytype.go` / `notion.go`**：将归一化后的对话写入目标系统。  
-- **`logger.go`**：针对 CLI 与服务端统一的日志输出。  
+- **`logger.go`**：统一的日志输出。  
 - **`types.go`**：保存 ChatGPT 原始结构、导出结构等类型定义。
 
 ## 前端结构
@@ -67,7 +59,7 @@ openai-backup/
 
 ## 配置与状态
 
-- `cliConfig` 同时作为 CLI 参数载体与 Web 配置结构。  
+- `cliConfig` 同时作为启动参数载体与 Web 配置结构。  
 - Web 模式通过 `store.go` 把配置写入 SQLite（明文存储，方便排查与备份）。  
 - 会话缓存 TTL：列表 30 秒、详情 5 分钟，减少频繁访问官方接口；SQLite 文件可随时备份/恢复以同步配置状态。
 

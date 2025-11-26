@@ -8,8 +8,13 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
+
+	"openai-backup/httpc"
 )
+
+var anytypeDebug = strings.TrimSpace(os.Getenv("ANYTYPE_DEBUG")) != ""
 
 type anytypeClient struct {
 	httpClient *http.Client
@@ -37,19 +42,30 @@ type createAnytypeObjectRequest struct {
 
 func newAnytypeClient(cfg *cliConfig) (*anytypeClient, error) {
 	if cfg.AnytypeToken == "" {
-		return nil, fmt.Errorf("缺少 Anytype API Key: 请提供 --anytype-token 或设置环境变量 %s")
+		return nil, fmt.Errorf("缺少 Anytype API Key: 请提供 --anytype-token 或设置环境变量 ANYTYPE_TOKEN/ANYTYPE_API_KEY")
 	}
 	if cfg.AnytypeSpaceID == "" {
-		return nil, fmt.Errorf("缺少 Anytype 空间 ID: 请提供 --anytype-space-id 或设置环境变量 %s")
+		return nil, fmt.Errorf("缺少 Anytype 空间 ID: 请提供 --anytype-space-id 或设置环境变量 ANYTYPE_SPACE_ID")
 	}
+	if strings.TrimSpace(cfg.AnytypeBaseURL) == "" {
+		return nil, fmt.Errorf("缺少 Anytype Base URL: 请提供 --anytype-base-url 或设置环境变量 ANYTYPE_BASE_URL")
+	}
+	if strings.TrimSpace(cfg.AnytypeTypeKey) == "" {
+		return nil, fmt.Errorf("缺少 Anytype Type Key: 请提供 --anytype-type-key 或设置环境变量 ANYTYPE_TYPE_KEY")
+	}
+
 	base := strings.TrimRight(cfg.AnytypeBaseURL, "/")
+	if parsed, err := url.Parse(base); err != nil || !parsed.IsAbs() {
+		return nil, fmt.Errorf("Anytype Base URL 无效: %s", cfg.AnytypeBaseURL)
+	}
 
 	return &anytypeClient{
-		baseURL: base,
-		version: cfg.AnytypeVersion,
-		spaceID: cfg.AnytypeSpaceID,
-		typeKey: cfg.AnytypeTypeKey,
-		token:   cfg.AnytypeToken,
+		httpClient: httpc.Client(),
+		baseURL:    base,
+		version:    cfg.AnytypeVersion,
+		spaceID:    cfg.AnytypeSpaceID,
+		typeKey:    cfg.AnytypeTypeKey,
+		token:      cfg.AnytypeToken,
 	}, nil
 }
 
@@ -63,6 +79,10 @@ func (c *anytypeClient) createConversationObject(ctx context.Context, conv expor
 		Body:    body,
 		Name:    name,
 		TypeKey: c.typeKey,
+	}
+
+	if c.httpClient == nil {
+		return "", fmt.Errorf("Anytype HTTP 客户端未初始化")
 	}
 
 	data, err := json.Marshal(payload)
@@ -82,11 +102,23 @@ func (c *anytypeClient) createConversationObject(ctx context.Context, conv expor
 		req.Header.Set("Anytype-Version", c.version)
 	}
 
+	if anytypeDebug {
+		logInfo("Anytype request: url=%s name=%s type=%s payload=%s", target, payload.Name, payload.TypeKey, string(data))
+	}
+
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return "", fmt.Errorf("调用 Anytype 接口失败: %w", err)
 	}
 	defer resp.Body.Close()
+
+	var respBytes []byte
+	if anytypeDebug {
+		respBytes, _ = io.ReadAll(resp.Body)
+		logInfo("Anytype response: status=%d url=%s body=%s", resp.StatusCode, target, strings.TrimSpace(string(respBytes)))
+		// 重置 reader 供后续解析
+		resp.Body = io.NopCloser(bytes.NewBuffer(respBytes))
+	}
 
 	if resp.StatusCode != http.StatusCreated {
 		msg := readBodyForLog(resp.Body)
@@ -94,6 +126,7 @@ func (c *anytypeClient) createConversationObject(ctx context.Context, conv expor
 		if err := json.Unmarshal([]byte(msg), &apiErr); err == nil && apiErr.Message != "" {
 			msg = apiErr.Message
 		}
+		logInfo("Anytype API error: status=%d url=%s body=%s", resp.StatusCode, target, strings.TrimSpace(msg))
 		return "", fmt.Errorf("创建 Anytype 对象失败: status=%d message=%s", resp.StatusCode, strings.TrimSpace(msg))
 	}
 
