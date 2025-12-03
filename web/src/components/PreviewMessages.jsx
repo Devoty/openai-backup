@@ -16,30 +16,33 @@ function PreviewMessages({ preview }) {
 			{preview.messages.map((msg, index) => {
 				const role = msg.role ? msg.role.toLowerCase() : "unknown";
 				const label = msg.role ? msg.role.toUpperCase() : "UNKNOWN";
+				const alignment = role === "user" ? "align-right" : "align-left";
 				return (
-					<div className={"message role-" + role} key={preview.id + "-" + index}>
-						<div className="message-header">
-							<span className="message-role">{label}</span>
-							<span className="message-time">{msg.timestamp || "-"}</span>
-						</div>
-						<div className="message-body">
-							<MarkdownContent content={msg.text || ""} />
-						</div>
-						{Array.isArray(msg.references) && msg.references.length > 0 ? (
-							<div className="message-references">
-								<div className="references-title">引用 / 来源</div>
-								<ul>
-									{msg.references.map((ref, refIdx) => (
-										<li key={"ref-" + index + "-" + refIdx}>
-											<a href={ref.url} target="_blank" rel="noopener noreferrer">
-												{ref.title || ref.url}
-											</a>
-											{ref.source ? <span className="reference-source">{ref.source}</span> : null}
-										</li>
-									))}
-								</ul>
+					<div className={`message-line ${alignment}`} key={preview.id + "-" + index}>
+						<div className={"message role-" + role}>
+							<div className="message-header">
+								<span className="message-role">{label}</span>
+								<span className="message-time">{msg.timestamp || "-"}</span>
 							</div>
-						) : null}
+							<div className="message-body">
+								<MarkdownContent content={msg.text || ""} />
+							</div>
+							{Array.isArray(msg.references) && msg.references.length > 0 ? (
+								<div className="message-references">
+									<div className="references-title">引用 / 来源</div>
+									<ul>
+										{msg.references.map((ref, refIdx) => (
+											<li key={"ref-" + index + "-" + refIdx}>
+												<a href={ref.url} target="_blank" rel="noopener noreferrer">
+													{ref.title || ref.url}
+												</a>
+												{ref.source ? <span className="reference-source">{ref.source}</span> : null}
+											</li>
+										))}
+									</ul>
+								</div>
+							) : null}
+						</div>
 					</div>
 				);
 			})}

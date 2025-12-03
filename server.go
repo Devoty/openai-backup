@@ -1,6 +1,8 @@
 package main
 
 import (
+	"archive/zip"
+	"bytes"
 	"context"
 	"embed"
 	"encoding/json"
@@ -243,6 +245,7 @@ func (s *webServer) routes() http.Handler {
 	mux.HandleFunc("/api/config/import", s.handleConfigImport)
 	mux.HandleFunc("/api/config", s.handleConfig)
 	mux.HandleFunc("/api/conversations", s.handleConversationList)
+	mux.HandleFunc("/api/conversations/export", s.handleConversationExport)
 	mux.HandleFunc("/api/conversations/delete", s.handleDelete)
 	mux.HandleFunc("/api/conversations/", s.handleConversationDetail)
 	mux.HandleFunc("/api/import", s.handleImport)
@@ -713,6 +716,86 @@ func (s *webServer) handleConversationDetail(w http.ResponseWriter, r *http.Requ
 	writeJSON(w, http.StatusOK, resp)
 }
 
+func (s *webServer) handleConversationExport(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var req exportRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		writeError(w, http.StatusBadRequest, "请求体解析失败: "+err.Error())
+		return
+	}
+	if len(req.IDs) == 0 {
+		writeError(w, http.StatusBadRequest, "请选择至少一条对话")
+		return
+	}
+
+	ctx := r.Context()
+	seen := make(map[string]struct{})
+	var conversations []exportConversation
+
+	for _, rawID := range req.IDs {
+		id := strings.TrimSpace(rawID)
+		if id == "" {
+			continue
+		}
+		if _, ok := seen[id]; ok {
+			continue
+		}
+		seen[id] = struct{}{}
+
+		conv, err := s.loadExportConversation(ctx, id, true)
+		if err != nil {
+			writeError(w, http.StatusBadGateway, fmt.Sprintf("获取对话 %s 详情失败: %v", id, err))
+			return
+		}
+		conversations = append(conversations, conv)
+	}
+
+	if len(conversations) == 0 {
+		writeError(w, http.StatusBadRequest, "没有有效的对话可导出")
+		return
+	}
+
+	cfg := s.configSnapshot()
+	buf := &bytes.Buffer{}
+	archive := zip.NewWriter(buf)
+	filenameTracker := make(map[string]int)
+
+	for _, conv := range conversations {
+		filename := buildConversationFilename(conv, filenameTracker)
+		content := renderConversationMarkdown(conv, cfg.OutputTimezone)
+		writer, err := archive.Create(filename)
+		if err != nil {
+			archive.Close()
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("创建压缩文件失败: %v", err))
+			return
+		}
+		if _, err := writer.Write([]byte(content)); err != nil {
+			archive.Close()
+			writeError(w, http.StatusInternalServerError, fmt.Sprintf("写入 %s 失败: %v", filename, err))
+			return
+		}
+	}
+
+	if err := archive.Close(); err != nil {
+		writeError(w, http.StatusInternalServerError, fmt.Sprintf("生成压缩包失败: %v", err))
+		return
+	}
+
+	logInfo("Web 导出 Markdown 压缩包: 选中=%d 有效=%d", len(req.IDs), len(conversations))
+
+	filename := fmt.Sprintf("conversations-%s.zip", time.Now().Format("20060102-150405"))
+	w.Header().Set("Content-Type", "application/zip")
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", filename))
+	w.Header().Set("Cache-Control", "no-store")
+
+	if _, err := w.Write(buf.Bytes()); err != nil {
+		logInfo("写入导出压缩包失败: %v", err)
+	}
+}
+
 func (s *webServer) handleImport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -1107,6 +1190,82 @@ type importRequest struct {
 
 type deleteRequest struct {
 	IDs []string `json:"ids"`
+}
+
+type exportRequest struct {
+	IDs []string `json:"ids"`
+}
+
+var filenameReplacer = strings.NewReplacer(
+	"/", "-",
+	"\\", "-",
+	":", "-",
+	"*", "-",
+	"?", "-",
+	"\"", "",
+	"<", "(",
+	">", ")",
+	"|", "-",
+	"\n", " ",
+	"\r", " ",
+	"\t", " ",
+)
+
+func buildConversationFilename(conv exportConversation, used map[string]int) string {
+	title := sanitizeFilenamePart(firstNonEmpty(conv.Title, "对话"))
+	idPart := sanitizeFilenamePart(conv.ID)
+	base := strings.TrimSpace(title)
+	if idPart != "" {
+		base = strings.TrimSpace(base + "-" + idPart)
+	}
+	if base == "" {
+		base = "conversation"
+	}
+	base = trimFilename(base, 120)
+	if base == "" {
+		base = "conversation"
+	}
+
+	name := base + ".md"
+	if used == nil {
+		return name
+	}
+	if _, ok := used[name]; !ok {
+		used[name] = 1
+		return name
+	}
+	index := used[name]
+	for {
+		index++
+		candidate := fmt.Sprintf("%s-%d.md", base, index)
+		if _, exists := used[candidate]; !exists {
+			used[name] = index
+			used[candidate] = 1
+			return candidate
+		}
+	}
+}
+
+func sanitizeFilenamePart(input string) string {
+	trimmed := strings.TrimSpace(input)
+	if trimmed == "" {
+		return ""
+	}
+	trimmed = filenameReplacer.Replace(trimmed)
+	trimmed = strings.Join(strings.Fields(trimmed), " ")
+	trimmed = strings.Trim(trimmed, ".-_ ")
+	return trimmed
+}
+
+func trimFilename(input string, maxRunes int) string {
+	if maxRunes <= 0 {
+		return ""
+	}
+	runes := []rune(input)
+	if len(runes) <= maxRunes {
+		return input
+	}
+	return strings.TrimSpace(string(runes[:maxRunes]))
 }
 
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {

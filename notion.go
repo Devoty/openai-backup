@@ -6,11 +6,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
+
+	"openai-backup/httpc"
 )
 
 const notionRichTextChunkLimit = 1800
+const defaultNotionBaseURL = "https://api.notion.com"
 
 type notionClient struct {
 	httpClient       *http.Client
@@ -99,10 +103,25 @@ func newNotionClient(cfg *cliConfig) (*notionClient, error) {
 	titleProperty := strings.TrimSpace(cfg.NotionTitleProperty)
 
 	baseURL := strings.TrimSpace(cfg.NotionBaseURL)
+	if baseURL == "" {
+		baseURL = defaultNotionBaseURL
+	}
 	baseURL = strings.TrimRight(baseURL, "/")
+	if parsed, err := url.Parse(baseURL); err != nil || !parsed.IsAbs() {
+		return nil, fmt.Errorf("Notion 基础地址无效: %s", cfg.NotionBaseURL)
+	}
 	version := strings.TrimSpace(cfg.NotionVersion)
 
+	if titleProperty == "" {
+		if parentType == "page" {
+			titleProperty = "title"
+		} else {
+			return nil, fmt.Errorf("缺少 Notion 标题属性: 请提供 --notion-title-property")
+		}
+	}
+
 	return &notionClient{
+		httpClient:       httpc.Client(),
 		baseURL:          baseURL,
 		version:          version,
 		token:            token,

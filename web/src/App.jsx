@@ -23,10 +23,12 @@ function App() {
 	const [message, setMessage] = useState({ text: "", error: false });
 	const [selected, setSelected] = useState(() => new Set());
 	const [importLoading, setImportLoading] = useState(false);
+	const [exportZipLoading, setExportZipLoading] = useState(false);
 	const [bulkDeleteLoading, setBulkDeleteLoading] = useState(false);
 	const [singleDeleteLoading, setSingleDeleteLoading] = useState(false);
 	const [preview, setPreview] = useState(initialPreview);
 	const [target, setTarget] = useState(initialConfig.target);
+	const [searchTerm, setSearchTerm] = useState("");
 	const [configImporting, setConfigImporting] = useState(false);
 	const [configExporting, setConfigExporting] = useState(false);
 	const messageTimerRef = useRef(null);
@@ -397,13 +399,15 @@ function App() {
 		[showMessage]
 	);
 
-	const handleImport = useCallback(async () => {
+	const handleImport = useCallback(async (targetOverride) => {
 		if (selectedCount === 0) {
 			showMessage("请先在列表中勾选需要导入的对话", true);
 			return;
 		}
+		const resolvedTarget = normalizeTarget(targetOverride || target);
+		setTarget(resolvedTarget);
 		setImportLoading(true);
-		const targetLabelForMessage = target === "notion" ? "Notion" : "Anytype";
+		const targetLabelForMessage = resolvedTarget === "notion" ? "Notion" : "Anytype";
 		showMessage("正在导入 " + selectedCount + " 条对话到 " + targetLabelForMessage + "…", false);
 		try {
 			const response = await fetch("/api/import", {
@@ -412,7 +416,7 @@ function App() {
 					"Content-Type": "application/json",
 					Accept: "application/json"
 				},
-				body: JSON.stringify({ ids: selectedIds, target })
+				body: JSON.stringify({ ids: selectedIds, target: resolvedTarget })
 			});
 			const data = await response.json().catch(() => ({}));
 			if (!response.ok) {
@@ -420,7 +424,7 @@ function App() {
 			}
 			const created = typeof data.created === "number" ? data.created : 0;
 			const skipped = Array.isArray(data.skipped) ? data.skipped.length : 0;
-			const responseTarget = normalizeTarget(data.target);
+			const responseTarget = normalizeTarget(data.target || resolvedTarget);
 			const responseLabel = responseTarget === "notion" ? "Notion" : "Anytype";
 			let text = "成功导入 " + created + " 条对话到 " + responseLabel;
 			if (skipped > 0) {
@@ -440,6 +444,75 @@ function App() {
 			setImportLoading(false);
 		}
 	}, [selectedCount, selectedIds, target, showMessage]);
+
+	const handleExportZip = useCallback(async () => {
+		if (selectedCount === 0) {
+			showMessage("请先在列表中勾选需要导出的对话", true);
+			return;
+		}
+		setExportZipLoading(true);
+		showMessage("正在打包选中的对话为 Markdown…", false);
+		try {
+			const response = await fetch("/api/conversations/export", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify({ ids: selectedIds })
+			});
+			if (!response.ok) {
+				let messageText = response.statusText || "导出失败";
+				try {
+					const data = await response.json();
+					if (data && data.error) {
+						messageText = data.error;
+					}
+				} catch {
+					try {
+						const text = await response.text();
+						if (text) {
+							messageText = text;
+						}
+					} catch {
+						// ignore secondary failure
+					}
+				}
+				throw new Error(messageText);
+			}
+			const blob = await response.blob();
+			let filename = "conversations.zip";
+			const disposition = response.headers.get("Content-Disposition");
+			if (disposition) {
+				const match = disposition.match(/filename\*=UTF-8''([^;]+)|filename=\"?([^\";]+)\"?/i);
+				if (match) {
+					const rawName = match[1] || match[2];
+					if (rawName) {
+						try {
+							filename = decodeURIComponent(rawName);
+						} catch {
+							filename = rawName;
+						}
+					}
+				}
+			} else {
+				const stamp = new Date().toISOString().replace(/[-:]/g, "").replace(/\..+/, "");
+				filename = "conversations-" + stamp + ".zip";
+			}
+			const url = URL.createObjectURL(blob);
+			const link = document.createElement("a");
+			link.href = url;
+			link.download = filename;
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+			URL.revokeObjectURL(url);
+			showMessage("Markdown 压缩包已开始下载", false);
+		} catch (error) {
+			showMessage((error && error.message) || "导出失败", true);
+		} finally {
+			setExportZipLoading(false);
+		}
+	}, [selectedCount, selectedIds, showMessage]);
 
 	const adjustAfterDelete = useCallback(
 		(deletedIds, deletedCount, clearPreviewFlag) => {
@@ -567,9 +640,12 @@ function App() {
 	const listenLabel = config.listen || "";
 	const timezoneLabel = config.timezone || "";
 	const totalLabel = "(" + total + ")";
-	const targetLabel = target === "notion" ? "Notion" : "Anytype";
-	const importLabel =
-		importLoading ? "导入中…" : selectedCount > 0 ? "导入所选到 " + targetLabel + " (" + selectedCount + ")" : "导入所选到 " + targetLabel;
+	const exportZipLabel =
+		exportZipLoading
+			? "打包中…"
+			: selectedCount > 0
+				? "导出所选为 Markdown (" + selectedCount + ")"
+				: "导出所选为 Markdown";
 	const bulkDeleteLabel = bulkDeleteLoading ? "删除中…" : selectedCount > 0 ? "删除所选 (" + selectedCount + ")" : "删除所选";
 	const singleDeleteLabel = singleDeleteLoading ? "删除中…" : "删除该对话";
 	const canPrev = !loading && offset > 0;
@@ -582,51 +658,54 @@ function App() {
 		setConfig((prev) => ({ ...prev, target: nextTarget }));
 	}, []);
 
+	const handleSearchChange = useCallback((event) => {
+		setSearchTerm(event.target.value || "");
+	}, []);
+
+	const filteredConversations = useMemo(() => {
+		const term = (searchTerm || "").trim().toLowerCase();
+		if (!term) {
+			return conversations;
+		}
+		return conversations.filter((item) => {
+			const title = (item.title || "").toLowerCase();
+			const id = (item.id || "").toLowerCase();
+			const createTime = (item.create_time || "").toLowerCase();
+			const updateTime = (item.update_time || "").toLowerCase();
+			return title.includes(term) || id.includes(term) || createTime.includes(term) || updateTime.includes(term);
+		});
+	}, [conversations, searchTerm]);
+
+	const handleBackToList = useCallback(() => {
+		setPreview(initialPreview);
+	}, []);
+
 	return (
 		<React.Fragment>
-			<header>
-				<div className="header-top">
-					<h1>ChatGPT 对话导出</h1>
-					<nav className="app-nav">
-						<button type="button" className={activeTab === "conversations" ? "active" : ""} onClick={() => setActiveTab("conversations")}>
-							对话列表
-						</button>
-						<button type="button" className={activeTab === "settings" ? "active" : ""} onClick={handleOpenSettings}>
-							配置管理
-						</button>
-					</nav>
-				</div>
-				{activeTab === "conversations" ? (
-					<div className="meta">
-						<span>监听地址: {listenLabel}</span>
-						<span>输出时区: {timezoneLabel || "-"}</span>
-						<div className="controls">
-							<label className="inline-select">
-								导出目标
-								<select value={target} onChange={handleTargetChange}>
-									<option value="anytype">Anytype</option>
-									<option value="notion">Notion</option>
-								</select>
-							</label>
-							<button type="button" onClick={handleReload} disabled={loading}>
-								刷新列表
-							</button>
-							<button type="button" onClick={handleImport} disabled={selectedCount === 0 || importLoading}>
-								{importLabel}
-							</button>
-							<button type="button" className="danger" onClick={handleBulkDelete} disabled={selectedCount === 0 || bulkDeleteLoading}>
-								{bulkDeleteLabel}
-							</button>
-						</div>
-						<div className="target-hint">{targetHint}</div>
+			<header className="app-header">
+				<div className="brand">
+					<div className="brand-logo">B</div>
+					<div className="brand-text">
+						<div className="brand-title">Backed</div>
+						<div className="brand-subtitle">ChatGPT 对话整理与导出</div>
 					</div>
-				) : (
-					<div className="settings-meta">在此页面修改运行及导出所需的参数，保存后立即生效。</div>
-				)}
-				<MessageBar message={message} />
+				</div>
+				<div className="brand-meta">
+					<div className="pill">监听 {listenLabel || "-"}</div>
+					<div className="pill">时区 {timezoneLabel || "-"}</div>
+					<button
+						type="button"
+						className={`ghost ${activeTab === "settings" ? "active" : ""}`}
+						onClick={handleOpenSettings}
+					>
+						设置
+					</button>
+				</div>
 			</header>
+			<MessageBar message={message} />
 			{activeTab === "settings" ? (
 				<div className="settings-container">
+					<div className="settings-meta-banner">分区配置导出路径与 Token，保存后立即生效。</div>
 					<ConfigForm
 						draft={configDraft}
 						sections={configSections}
@@ -641,81 +720,168 @@ function App() {
 						importing={configImporting}
 						exporting={configExporting}
 					/>
-					<input
-						ref={configImportInputRef}
-						type="file"
-						accept="application/json"
-						style={{ display: "none" }}
-						onChange={handleConfigImportFile}
-					/>
+					<input ref={configImportInputRef} type="file" accept="application/json" style={{ display: "none" }} onChange={handleConfigImportFile} />
 				</div>
 			) : (
-				<main>
-					<section className="panel list-panel">
-						<div className="panel-header">
-							<h2>
-								对话列表 <span>{totalLabel}</span>
-							</h2>
-							<div className="pagination-controls">
-								<button type="button" className="inline-button" onClick={handlePrevPage} disabled={!canPrev}>
+				<div className="workspace">
+					<div className="global-toolbar">
+						<div className="toolbar-left">
+							<div className="toolbar-title">对话管理</div>
+							<div className="toolbar-subtitle">
+								<span>共 {total} 条</span>
+								<span className="dot">•</span>
+								<span>{pageInfoText}</span>
+							</div>
+						</div>
+						<div className="toolbar-actions">
+							<div className="button-group">
+								<button type="button" onClick={handleExportZip} disabled={selectedCount === 0 || exportZipLoading}>
+									{exportZipLabel}
+								</button>
+								<button
+									type="button"
+									className="secondary"
+									onClick={() => handleImport("notion")}
+									disabled={selectedCount === 0 || importLoading}
+								>
+									导出到 Notion
+								</button>
+								<button
+									type="button"
+									className="secondary"
+									onClick={() => handleImport("anytype")}
+									disabled={selectedCount === 0 || importLoading}
+								>
+									导出到 Anytype
+								</button>
+							</div>
+							<div className="button-group ghost-group">
+								<button type="button" className="ghost" onClick={handleReload} disabled={loading}>
+									刷新
+								</button>
+								<button type="button" className="ghost danger-outline" onClick={handleBulkDelete} disabled={selectedCount === 0 || bulkDeleteLoading}>
+									{bulkDeleteLabel}
+								</button>
+							</div>
+						</div>
+					</div>
+					<main className="content-grid">
+						<section className="panel list-panel">
+							<div className="panel-header list-panel-header">
+								<div className="list-heading">
+									<h2>
+										对话列表 <span>{totalLabel}</span>
+									</h2>
+									<div className="target-hint muted">{targetHint}</div>
+								</div>
+								<div className="list-tools">
+									<div className="search-box">
+										<input type="search" value={searchTerm} onChange={handleSearchChange} placeholder="搜索标题 / ID / 时间" />
+									</div>
+									<label className="inline-select">
+										导出目标
+										<select value={target} onChange={handleTargetChange}>
+											<option value="anytype">Anytype</option>
+											<option value="notion">Notion</option>
+										</select>
+									</label>
+									<label className="page-size">
+										每页
+										<select value={limit} onChange={handlePageSizeChange}>
+											<option value="10">10</option>
+											<option value="20">20</option>
+											<option value="50">50</option>
+										</select>
+									</label>
+								</div>
+							</div>
+							<div className="list-body">
+								{loading ? (
+									<div className="empty-placeholder">正在加载…</div>
+								) : filteredConversations.length === 0 ? (
+									<div className="empty-placeholder">{searchTerm ? "没有匹配的对话" : "暂未获取到对话记录"}</div>
+								) : (
+									<div className="conversation-list">
+										{filteredConversations.map((item) => (
+											<ConversationRow
+												key={item.id}
+												item={item}
+												checked={selected.has(item.id)}
+												active={preview.id === item.id}
+												onToggle={toggleSelection}
+												onPreview={handlePreview}
+												previewLoading={preview.loading && preview.id === item.id}
+											/>
+										))}
+									</div>
+								)}
+							</div>
+							<div className="pagination-bar">
+								<button type="button" className="ghost" onClick={handlePrevPage} disabled={!canPrev}>
 									上一页
 								</button>
-								<span>{pageInfoText}</span>
-								<button type="button" className="inline-button" onClick={handleNextPage} disabled={!canNext}>
+								<div className="page-info">{pageInfoText}</div>
+								<button type="button" className="ghost" onClick={handleNextPage} disabled={!canNext}>
 									下一页
 								</button>
-								<label className="page-size">
-									每页
-									<select value={limit} onChange={handlePageSizeChange}>
-										<option value="10">10</option>
-										<option value="20">20</option>
-										<option value="50">50</option>
-									</select>
-								</label>
 							</div>
-						</div>
-						<div className="list-body">
-							{loading ? (
-								<div className="empty-placeholder">正在加载…</div>
-							) : conversations.length === 0 ? (
-								<div className="empty-placeholder">暂未获取到对话记录</div>
-							) : (
-								<div className="conversation-list">
-									{conversations.map((item) => (
-										<ConversationRow
-											key={item.id}
-											item={item}
-											checked={selected.has(item.id)}
-											active={preview.id === item.id}
-											onToggle={toggleSelection}
-											onPreview={handlePreview}
-											previewLoading={preview.loading && preview.id === item.id}
-										/>
-									))}
+						</section>
+						<section className="panel preview-panel">
+							<div className="preview-header">
+								<div className="preview-title-group">
+									<button type="button" className="ghost" onClick={handleBackToList}>
+										返回
+									</button>
+									<div className="preview-title-wrap">
+										<div className="preview-title">{preview.id ? preview.title || preview.id : "请选择左侧的对话查看详情"}</div>
+										<div className="preview-subtitle">最近更新 {preview.updateTime || "-"}</div>
+									</div>
 								</div>
-							)}
-						</div>
-					</section>
-					<section className="panel preview-panel">
-						<div className="preview-header">
-							<h2>对话预览</h2>
-							<div className="preview-actions">
-								<button type="button" className="inline-button danger" onClick={handleSingleDelete} disabled={!preview.id || singleDeleteLoading}>
-									{singleDeleteLabel}
-								</button>
+								<div className="preview-actions">
+									<div className="button-group">
+										<button type="button" className="secondary" onClick={handleExportZip} disabled={selectedCount === 0 || exportZipLoading}>
+											导出 Markdown
+										</button>
+										<button type="button" className="secondary" onClick={() => handleImport("notion")} disabled={selectedCount === 0 || importLoading}>
+											导出 Notion
+										</button>
+										<button type="button" className="secondary" onClick={() => handleImport("anytype")} disabled={selectedCount === 0 || importLoading}>
+											导出 Anytype
+										</button>
+									</div>
+									<button type="button" className="danger" onClick={handleSingleDelete} disabled={!preview.id || singleDeleteLoading}>
+										{singleDeleteLabel}
+									</button>
+								</div>
 							</div>
-						</div>
-						<div className="preview-content">
-							<h3>{preview.id ? preview.title || preview.id : "请选择左侧的对话查看详情"}</h3>
 							<div className="preview-meta">
-								{preview.id ? "ID: " + preview.id + " · 创建: " + (preview.createTime || "-") + " · 最近更新: " + (preview.updateTime || "-") : ""}
+								<div className="meta-grid">
+									<div className="meta-item">
+										<span>对话 ID</span>
+										<strong>{preview.id || "-"}</strong>
+									</div>
+									<div className="meta-item">
+										<span>创建时间</span>
+										<strong>{preview.createTime || "-"}</strong>
+									</div>
+									<div className="meta-item">
+										<span>更新时间</span>
+										<strong>{preview.updateTime || "-"}</strong>
+									</div>
+									<div className="meta-item">
+										<span>来源</span>
+										<strong>-</strong>
+									</div>
+								</div>
 							</div>
-							<div id="preview-messages">
-								<PreviewMessages preview={preview} />
+							<div className="preview-content">
+								<div className="message-wrapper">
+									<PreviewMessages preview={preview} />
+								</div>
 							</div>
-						</div>
-					</section>
-				</main>
+						</section>
+					</main>
+				</div>
 			)}
 		</React.Fragment>
 	);

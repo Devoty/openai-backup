@@ -1,9 +1,10 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 
 function ConfigField({ field, value, onChange }) {
-	const { key, label, type = "text", placeholder, options = [], description, rows = 3, min, max, fullWidth } = field;
+	const { key, label, type = "text", placeholder, options = [], description, rows = 3, min, max, fullWidth, secureToggle } = field;
 	const fieldClassName = fullWidth ? "form-field full-width" : "form-field";
 	const fieldId = "config-" + key;
+	const [visible, setVisible] = useState(false);
 
 	if (type === "checkbox") {
 		return (
@@ -26,17 +27,37 @@ function ConfigField({ field, value, onChange }) {
 		return (
 			<div className={fieldClassName}>
 				<label htmlFor={fieldId}>{label}</label>
-				<select
-					id={fieldId}
-					value={value == null ? "" : value}
-					onChange={(event) => onChange(key, event.target.value)}
-				>
+				<select id={fieldId} value={value == null ? "" : value} onChange={(event) => onChange(key, event.target.value)}>
 					{options.map((option) => (
 						<option key={option.value == null ? "" : option.value} value={option.value == null ? "" : option.value}>
 							{option.label}
 						</option>
 					))}
 				</select>
+				{description ? <div className="field-hint">{description}</div> : null}
+			</div>
+		);
+	}
+
+	if (type === "password") {
+		return (
+			<div className={fieldClassName}>
+				<label htmlFor={fieldId}>{label}</label>
+				<div className="secure-input">
+					<input
+						id={fieldId}
+						type={visible ? "text" : "password"}
+						value={value == null ? "" : value}
+						onChange={(event) => onChange(key, event.target.value)}
+						placeholder={placeholder}
+						autoComplete="off"
+					/>
+					{secureToggle ? (
+						<button type="button" className="ghost-link" onClick={() => setVisible((prev) => !prev)}>
+							{visible ? "隐藏" : "显示"}
+						</button>
+					) : null}
+				</div>
 				{description ? <div className="field-hint">{description}</div> : null}
 			</div>
 		);
@@ -112,43 +133,47 @@ function ConfigForm({
 	}, [activeSection, sections]);
 
 	return (
-		<form className="settings-form" onSubmit={onSubmit}>
-			<div className="settings-tabs">
-				<div className="tab-list">
-					{(sections || []).map((section) => {
-						const isActive = currentSection ? section.key === currentSection.key : false;
-						return (
-							<button
-								key={section.key}
-								type="button"
-								className={isActive ? "active" : ""}
-								onClick={() => (onSectionChange ? onSectionChange(section.key) : null)}
-							>
-								{section.title}
-							</button>
-						);
-					})}
-				</div>
-				<div className="tab-actions">
-					<button type="button" className="secondary" onClick={() => (onImport ? onImport() : null)} disabled={importing || saving}>
-						{importing ? "导入中…" : "导入基础数据"}
-					</button>
-					<button type="button" onClick={() => (onExport ? onExport() : null)} disabled={exporting}>
-						{exporting ? "导出中…" : "导出基础数据"}
-					</button>
-				</div>
+	<form className="settings-form" onSubmit={onSubmit}>
+		<div className="settings-tabs">
+			<div className="tab-list">
+				{(sections || []).map((section) => {
+					const isActive = currentSection ? section.key === currentSection.key : false;
+					return (
+						<button
+							key={section.key}
+							type="button"
+							className={isActive ? "active" : ""}
+							onClick={() => (onSectionChange ? onSectionChange(section.key) : null)}
+						>
+							{section.title}
+						</button>
+					);
+				})}
 			</div>
-			{currentSection ? <ConfigSection section={currentSection} draft={draft} onFieldChange={onFieldChange} /> : null}
-			<div className="form-actions">
+			<div className="tab-actions">
+				<button type="button" className="secondary" onClick={() => (onImport ? onImport() : null)} disabled={importing || saving}>
+					{importing ? "导入中…" : "导入配置"}
+				</button>
+				<button type="button" onClick={() => (onExport ? onExport() : null)} disabled={exporting}>
+					{exporting ? "导出中…" : "导出配置"}
+				</button>
+			</div>
+		</div>
+		{currentSection ? <ConfigSection section={currentSection} draft={draft} onFieldChange={onFieldChange} /> : null}
+		<div className="form-actions sticky-footer">
+			<div className="form-actions-left">
 				<button type="button" className="secondary" onClick={onReset} disabled={saving}>
 					重置修改
 				</button>
+			</div>
+			<div className="form-actions-right">
 				<button type="submit" disabled={saving}>
 					{saving ? "保存中…" : "保存配置"}
 				</button>
 			</div>
-		</form>
-	);
+		</div>
+	</form>
+);
 }
 
 export default React.memo(ConfigForm);
